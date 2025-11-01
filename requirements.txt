@@ -1,3 +1,10 @@
 fastapi[standard]
 psycopg[binary]
 psycopg_pool
+python-dotenv
+aiofiles
+redis
+requests
+Authlib
+httpx
+pyjwt

@@ -1,21 +1,20 @@
-DROP TABLE users;
+DROP TABLE users CASCADE;
 DROP TABLE posts;
-DROP TYPE status;
 
-CREATE TYPE userStatus AS ENUM (
-    'ACTIVE',
-    'DISABLED',
-    'DEACTIVATED'
-);
+-- CREATE TYPE userStatus AS ENUM (
+--     'ACTIVE',
+--     'DISABLED',
+--     'DEACTIVATED'
+-- );
 
-CREATE TYPE postStatus AS ENUM (
-    'pending',
-    'sent',
-    'failed'
-);
+-- CREATE TYPE postStatus AS ENUM (
+--     'pending',
+--     'sent',
+--     'failed'
+-- );
 
 CREATE TABLE users (
-    id INTEGER PRIMARY KEY,
+    id BIGINT PRIMARY KEY,
     username VARCHAR(15) NOT NULL UNIQUE,
     display_name VARCHAR(50) NOT NULL,
     profile_img VARCHAR DEFAULT NULL,

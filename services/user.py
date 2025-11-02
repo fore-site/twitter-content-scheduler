@@ -1,6 +1,6 @@
 from config import db
 from datetime import timedelta
-from utils.dependencies import check_jwt
+from utils.dependencies import CheckJwt
 from fastapi import Depends, HTTPException, status
 from psycopg.rows import dict_row
 from typing import Annotated
@@ -64,7 +64,7 @@ async def get_access_refresh_token() -> Token:
         refresh_token = tokens[1]
     return Token(access_token=access_token, refresh_token=refresh_token, token_type="bearer")
 
-async def get_current_user(user_id: Annotated[int, Depends(check_jwt)]):
+async def get_current_user(user_id: Annotated[int, Depends(CheckJwt())]):
     async with db.db_pool:
         async with db.db_pool.connection() as conn:
             async with conn.cursor(row_factory=dict_row) as cur:
@@ -92,11 +92,11 @@ async def get_current_active_user(current_user: Annotated[UserOut, Depends(get_c
     else:
         return current_user       
 
-async def get_new_access_token(user_id: Annotated[int, Depends(check_jwt(refresh=True))]):
+async def get_new_access_token(user_id: Annotated[int, Depends(CheckJwt(refresh=True))]):
     new_access_token = create_access_token({"sub": user_id})
     return Token(access_token=new_access_token, token_type="bearer")
 
-async def revoke_tokens(payload: Annotated[dict, Depends(check_jwt(verify_type=False, dict_format=True))]):
+async def revoke_tokens(payload: Annotated[dict, Depends(CheckJwt(verify_type=False, dict_format=True))]):
     jti = payload.get("jti")
     ttype = payload.get("type")
     await db.redis_client.set(jti, "")

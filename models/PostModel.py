@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from pydantic import BaseModel, field_validator, ValidationInfo
 from config.db import db_pool
 from models.TypeModel import PostStatus
@@ -9,6 +9,9 @@ class Post(BaseModel):
     user_id: int
     content: str
     post_img: str | None = None
+    days: int = 0
+    hours: int = 0
+    minutes: int = 0
     scheduled_time: datetime
 
     @field_validator('content', mode='after')
@@ -32,6 +35,16 @@ class Post(BaseModel):
         elif is_premium and len(content) > 25000:
             raise ValueError("Maximum character count for premium exceeded.")
         return content
+    
+    @field_validator("scheduled_time", mode="after")
+    @classmethod
+    async def get_scheduled_time(cls, scheduled_time: datetime, info: ValidationInfo) -> datetime:
+        day = info.data.get("days")
+        minute = info.data.get("minutes")
+        hour = info.data.get("hours")
+
+        scheduled_time = timedelta(day=day, minute=minute, hour=hour) + datetime.now()
+        return scheduled_time
     
 class PostOut(Post):
     """Table Posts. Model for output posts"""

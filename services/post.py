@@ -17,3 +17,4 @@ async def create_post(user_id: Annotated[int, Depends(CheckJwt)], post_body: Pos
                 post_body.scheduled_time, 
                 user_id))
         await conn.commit()
+    return post_body

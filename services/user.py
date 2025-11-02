@@ -1,10 +1,11 @@
 from config import db
 from datetime import timedelta
-from utils.dependencies import CheckJwt
 from fastapi import Depends, HTTPException, status
 from psycopg.rows import dict_row
 from typing import Annotated
 from utils.AuthUtils import twitter_client, create_access_token, create_refresh_token
+from utils.dependencies import CheckJwt
+from utils.TwitterUtils import fetch_user
 from models.UserModel import BaseUser, UserOut
 from models.TypeModel import UserStatus
 from models.TokenModel import Token
@@ -35,15 +36,7 @@ async def create_user_in_db(user) -> tuple:
     return access_token, refresh_token
 
 async def get_access_refresh_token() -> Token:
-    try:
-        async_current_user = await twitter_client.get(url="https://api.x.com/2/users/me?user.fields=id,username,name,profile_image_url,verified")
-    except httpx.ConnectTimeout:
-        raise HTTPException(
-            status_code=status.HTTP_504_GATEWAY_TIMEOUT,
-            detail="Oauth service took too long to respond. Please try again."
-        )
-    else:
-        current_user = async_current_user.json()
+    current_user = fetch_user()
     
     # VALIDATE AGAINST PYDANTIC MODEL
     validated_user = BaseUser(id=current_user["data"].get("id"),
@@ -101,3 +94,35 @@ async def revoke_tokens(payload: Annotated[dict, Depends(CheckJwt(verify_type=Fa
     ttype = payload.get("type")
     await db.redis_client.set(jti, "")
     return {"detail": f"{ttype} token revoked successfully."}
+
+async def update_user(user_id: Annotated[int, Depends(CheckJwt())]):
+    # FETCH OAUTH TOKEN FROM REDIS
+    token = await db.redis_client.get(f"{user_id}:oauth")
+
+    # RETRIEVE USER DETAILS FROM TWITTER/X
+    current_user = fetch_user(token=token)
+
+    # VALIDATE AGAINST PYDANTIC MODEL
+    validated_user = BaseUser(id=user_id,
+                  username=current_user["data"].get("username"),
+                  display_name=current_user["data"].get("name"),
+                  profile_img=current_user["data"].get("profile_image_url"), 
+                  is_premium=current_user["data"].get("verified"))
+
+    async with db.db_pool:
+        async with db.db_pool.connection() as conn:
+            async with conn.cursor() as cur:
+                cur.execute("""
+            UPDATE users
+            SET username = %(username)s, 
+                display_name = %(name)s,
+                profile_img = %(profile_image_url)s,
+                is_premium = %(verified)s
+            WHERE users.id = %(user_id)s
+            """, {"username": validated_user.username, 
+                "name": validated_user.display_name, 
+                "profile_image_url": validated_user.profile_img, 
+                "verified": validated_user.is_premium, 
+                "user_id": user_id})
+        await conn.commit()
+    return validated_user

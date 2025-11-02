@@ -3,7 +3,7 @@ from datetime import datetime
 from models.TypeModel import UserStatus
 
 class BaseUser(BaseModel):
-    """Table users. Model for input user."""
+    """Table users. Model for create or update user. PATCH responses validate against this model. """
     id: int
     username: str
     display_name: str

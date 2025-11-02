@@ -18,3 +18,6 @@ async def create_post(user_id: Annotated[int, Depends(CheckJwt)], post_body: Pos
                 user_id))
         await conn.commit()
     return post_body
+
+async def update_post(user_id: Annotated[int, Depends(CheckJwt)]):
+    pass

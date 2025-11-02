@@ -21,6 +21,6 @@ async def get_post(user_id: Annotated[int, Depends(CheckJwt)]):
 async def make_post(post: Annotated[int, Depends(create_post)]):
     return post
 
-@router.put("/posts")
+@router.patch("/posts")
 async def update_post():
     pass

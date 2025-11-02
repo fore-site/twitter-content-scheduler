@@ -4,6 +4,7 @@ from utils.AuthUtils import twitter_client
 from utils.dependencies import CheckJwt
 from config import db
 from config.db import redis_client
+from models.PostModel import Post
 from services.post import create_post
 
 router = APIRouter()
@@ -16,6 +17,10 @@ async def get_post(user_id: Annotated[int, Depends(CheckJwt)]):
     tweets = async_tweets.json()
     return tweets
 
-@router.post("/posts")
+@router.post("/posts", response_model=Post)
 async def make_post(post: Annotated[int, Depends(create_post)]):
     return post
+
+@router.put("/posts")
+async def update_post():
+    pass

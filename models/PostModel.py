@@ -4,7 +4,7 @@ from config.db import db_pool
 from models.TypeModel import PostStatus
 
 class Post(BaseModel):
-    """Table posts. Model for input posts."""
+    """Table posts. Model for input posts. PUT/PATCH response is validated against this model."""
     id: int
     user_id: int
     content: str

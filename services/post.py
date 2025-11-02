@@ -2,9 +2,9 @@ from config import db
 from fastapi import Depends
 from models.PostModel import Post
 from typing import Annotated
-from utils.dependencies import check_jwt
+from utils.dependencies import CheckJwt
 
-async def create_post(user_id: Annotated[int, Depends(check_jwt)], post_body: Post):
+async def create_post(user_id: Annotated[int, Depends(CheckJwt)], post_body: Post):
     async with db.db_pool:
         async with db.db_pool.connection() as conn:
             async with conn.cursor() as cur:
@@ -15,5 +15,5 @@ async def create_post(user_id: Annotated[int, Depends(check_jwt)], post_body: Po
             """, (post_body.content, 
                 post_body.post_img, 
                 post_body.scheduled_time, 
-                post_body.user_id))
+                user_id))
         await conn.commit()

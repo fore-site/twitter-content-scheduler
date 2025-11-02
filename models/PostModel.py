@@ -48,5 +48,10 @@ class Post(BaseModel):
     
 class PostOut(Post):
     """Table Posts. Model for output posts"""
+    id: int
+    user_id: int
+    content: str
+    post_img: str | None = None
+    scheduled_time: datetime
     created_at: datetime
     post_status: PostStatus

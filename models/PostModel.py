@@ -3,10 +3,8 @@ from pydantic import BaseModel, field_validator, ValidationInfo
 from config.db import db_pool
 from models.TypeModel import PostStatus
 
-class Post(BaseModel):
-    """Table posts. Model for input posts. PUT/PATCH response is validated against this model."""
-    id: int
-    user_id: int
+class UpdatePost(BaseModel):
+    """Table posts. Model for updating posts."""
     content: str
     post_img: str | None = None
     days: int = 0
@@ -45,8 +43,13 @@ class Post(BaseModel):
 
         scheduled_time = timedelta(day=day, minute=minute, hour=hour) + datetime.now()
         return scheduled_time
-    
-class PostOut(Post):
+
+class PostIn(UpdatePost):
+    """Table Posts. Model for creating posts."""
+    id: int
+    user_id: int
+
+class PostOut(UpdatePost):
     """Table Posts. Model for output posts"""
     id: int
     user_id: int

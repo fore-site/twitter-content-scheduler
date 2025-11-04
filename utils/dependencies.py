@@ -7,7 +7,16 @@ from jwt.exceptions import InvalidTokenError, ExpiredSignatureError
 from typing import Annotated
 import jwt
 
-oauth2_scheme = OAuth2AuthorizationCodeBearer(tokenUrl=token_uri, authorizationUrl=auth_url)
+oauth2_scheme = OAuth2AuthorizationCodeBearer(tokenUrl=token_uri, 
+                                              authorizationUrl=auth_url, 
+                                              refreshUrl=token_uri, 
+                                              scopes={
+                                                  "tweet.read": "App can read user's tweets",
+                                                  "tweet.write": "App can create tweets for users.",
+                                                  "users.read": "App can view other users' profiles",
+                                                  "media.write": "App can upload media for users.",
+                                                  "offline.access": "Oauth provider returns refresh token for unlimited access"
+                                              })
 
 class CheckJwt:
     """Verify and validate each jwt token. Access or refresh."""
@@ -20,7 +29,7 @@ class CheckJwt:
 
         self.credentials_exceptions = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials. JWT token missing or invalid.",
+        detail="Could not validate credentials. JWT token invalid.",
         headers={"WWW-Authenticate": "Bearer"}
     )
     

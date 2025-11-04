@@ -2,25 +2,13 @@ from authlib.integrations.httpx_client import AsyncOAuth2Client
 from config.settings import client_id, client_secret, token_uri, redirect_uri, authorize_url, scope, JWT_SECRET_KEY, ALGORITHM
 from config.db import redis_client
 from datetime import timedelta, datetime, timezone
-from fastapi import Depends
-from typing import Annotated
-from utils.dependencies import CheckJwt
+from utils.TwitterUtils import update_oauth_token
 import base64
 import hashlib
 import jwt
 import os
 import re
 import uuid
-
-# SAVE OAUTH TOKEN TO DB DURING AUTOMATIC TOKEN REFRESH
-async def update_oauth_token(token, user_id: Annotated[int, Depends(CheckJwt())], refresh_token = None, access_token = None):    
-    # SAVE TOKEN TO REDIS, THIS IS A TEMPORARY STORAGE
-    if refresh_token:
-        key = f"{user_id}:oauth"
-        await redis_client.set(key, token)
-    else:
-        print("Unable to save token in redis")
-        return
 
 # GENERATE TWITTER CLIENT SESSION
 twitter_client = AsyncOAuth2Client(client_id=client_id,

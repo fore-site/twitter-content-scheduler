@@ -1,5 +1,5 @@
 from utils.AuthUtils import auth_url
-from config.settings import JWT_SECRET_KEY, ALGORITHM
+from config.settings import token_uri, JWT_SECRET_KEY, ALGORITHM
 from config import db
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2AuthorizationCodeBearer
@@ -7,7 +7,7 @@ from jwt.exceptions import InvalidTokenError, ExpiredSignatureError
 from typing import Annotated
 import jwt
 
-oauth2_scheme = OAuth2AuthorizationCodeBearer(tokenUrl="login", authorizationUrl=auth_url)
+oauth2_scheme = OAuth2AuthorizationCodeBearer(tokenUrl=token_uri, authorizationUrl=auth_url)
 
 class CheckJwt:
     """Verify and validate each jwt token. Access or refresh."""

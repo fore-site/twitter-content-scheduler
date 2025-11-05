@@ -2,6 +2,7 @@ from fastapi import Depends, APIRouter, status
 from typing import Annotated
 from utils.AuthUtils import twitter_client
 from utils.dependencies import CheckJwt
+from utils.tokenUtils import fetch_oauth_from_redis
 from config import db
 from config.db import redis_client
 from models.PostModel import PostIn, UpdatePost
@@ -11,7 +12,7 @@ router = APIRouter()
 
 @router.get("/get-post")
 async def get_post(user_id: Annotated[int, Depends(CheckJwt)]):
-    oauth_token = redis_client.get(f"{user_id}:oauth")
+    oauth_token = fetch_oauth_from_redis(f"{user_id}:oauth")
     twitter_client.token = oauth_token
     async_tweets = await twitter_client.get(f"https://api.x.com/2/users/{user_id}/tweets")
     tweets = async_tweets.json()

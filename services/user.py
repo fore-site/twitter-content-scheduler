@@ -1,15 +1,15 @@
 from config import db
-from datetime import timedelta
 from fastapi import Depends, HTTPException, status
 from psycopg.rows import dict_row
 from typing import Annotated
 from utils.AuthUtils import twitter_client, create_access_token, create_refresh_token
 from utils.dependencies import CheckJwt
 from utils.TwitterUtils import fetch_user
+from utils.tokenUtils import fetch_oauth_from_redis
 from models.UserModel import BaseUser, UserOut
 from models.TypeModel import UserStatus
 from models.TokenModel import Token
-import httpx
+import json
 
 async def create_user_in_db(user) -> tuple:
     async with db.db_pool:
@@ -27,7 +27,8 @@ async def create_user_in_db(user) -> tuple:
         await conn.commit()
         
     # SAVE OAUTH TOKEN TO REDIS
-    await db.redis_client.set(f"{user.id}:oauth", twitter_client.token)
+    serialized_token = json.dumps(twitter_client.token)
+    await db.redis_client.set(f"{user.id}:oauth", serialized_token)
 
     # CREATE AND RETURN JWT ACCESS TOKEN 
     payload = {"sub": user.id}
@@ -97,7 +98,7 @@ async def revoke_tokens(payload: Annotated[dict, Depends(CheckJwt(verify_type=Fa
 
 async def update_user(user_id: Annotated[int, Depends(CheckJwt())]):
     # FETCH OAUTH TOKEN FROM REDIS
-    token = await db.redis_client.get(f"{user_id}:oauth")
+    token = await fetch_oauth_from_redis(f"{user_id}:oauth")
 
     # RETRIEVE USER DETAILS FROM TWITTER/X
     current_user = await fetch_user(token=token)

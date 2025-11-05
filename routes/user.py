@@ -1,11 +1,11 @@
 from utils import AuthUtils as auth
-from config import db
-from fastapi import APIRouter, Request, Response, Depends
+from fastapi import APIRouter, Request, Response, Depends, HTTPException, status
 from fastapi.responses import RedirectResponse
 from models.UserModel import BaseUser, UserOut
 from models.TokenModel import Token
 from services.user import get_access_refresh_token, get_current_active_user, get_new_access_token, revoke_tokens, update_user
 from typing import Annotated
+import httpx
 
 router = APIRouter()
 
@@ -16,17 +16,21 @@ async def login_user():
     return res
 
 @router.get("/", response_model=Token)
-async def callback_home(request: Request, response: Response):
+async def callback_home(request: Request):
     # request_state = request.query_params.get("state")
     # stored_state = request.cookies.get("oauth_state")
 
     # if stored_state != request_state:
     #     raise HTTPException(status_code=403, detail="Invalid state string.")
-    
-    token = await auth.twitter_client.fetch_token(url=auth.token_uri,
-                              authorization_response=str(request.url),
-                              code_verifier=auth.code_verifier)
-
+    try:
+        token = await auth.twitter_client.fetch_token(url=auth.token_uri,
+                                  authorization_response=str(request.url),
+                                  code_verifier=auth.code_verifier)
+    except httpx.ConnectTimeout:
+        raise HTTPException(
+            status_code=status.HTTP_504_GATEWAY_TIMEOUT,
+            detail="Oauth service took too long to respond. Please try again."
+        )
     # response.delete_cookie(key="oauth_state")
     access_refresh_token = await get_access_refresh_token()
     return access_refresh_token

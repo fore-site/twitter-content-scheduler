@@ -9,10 +9,6 @@ from typing import Annotated
 
 router = APIRouter()
 
-# @router.get("/")
-# async def home():
-#     return {"detail": "Welcome."}
-
 @router.get("/login")
 async def login_user():
     res = RedirectResponse(auth.auth_url)
@@ -39,14 +35,14 @@ async def callback_home(request: Request, response: Response):
 async def get_profile(current_user: Annotated[UserOut, Depends(get_current_active_user)]):
     return current_user
 
+@router.put("/profile", response_model=BaseUser)
+async def update_profile(update_user_from_x: Annotated[BaseUser, Depends(update_user)]):
+    return update_user_from_x
+
 @router.get("/refresh", response_model=Token)
 async def token_refresh(new_access_token: Annotated[Token, Depends(get_new_access_token)]):
     return new_access_token
 
-@router.get("/logout")
+@router.post("/logout")
 async def logout_user(msg: Annotated[dict, Depends(revoke_tokens)]) -> dict:
     return msg
-
-@router.put("/profile", response_model=BaseUser)
-async def update_profile(update_user_from_x: Annotated[BaseUser, Depends(update_user)]):
-    return update_user_from_x

@@ -1,4 +1,4 @@
-from fastapi import Depends, APIRouter
+from fastapi import Depends, APIRouter, status
 from typing import Annotated
 from utils.AuthUtils import twitter_client
 from utils.dependencies import CheckJwt
@@ -17,7 +17,7 @@ async def get_post(user_id: Annotated[int, Depends(CheckJwt)]):
     tweets = async_tweets.json()
     return tweets
 
-@router.post("/posts", response_model=PostIn)
+@router.post("/posts", response_model=PostIn, status_code=status.HTTP_201_CREATED)
 async def make_post(post: Annotated[PostIn, Depends(create_post)]):
     return post
 

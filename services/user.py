@@ -36,7 +36,7 @@ async def create_user_in_db(user) -> tuple:
     return access_token, refresh_token
 
 async def get_access_refresh_token() -> Token:
-    current_user = fetch_user()
+    current_user = await fetch_user()
     
     # VALIDATE AGAINST PYDANTIC MODEL
     validated_user = BaseUser(id=current_user["data"].get("id"),

@@ -23,8 +23,8 @@ app = FastAPI(lifespan=lifespan)
 app.add_middleware(
     ContextMiddleware,
     plugins=(
-        plugins.RequestIdPlugin,
-        plugins.CorrelationIdPlugin
+        plugins.RequestIdPlugin(),
+        plugins.CorrelationIdPlugin()
     )
 )
 app.include_router(user.router)

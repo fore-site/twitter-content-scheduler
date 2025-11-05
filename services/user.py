@@ -52,7 +52,7 @@ async def get_access_refresh_token() -> Token:
         access_token = create_access_token(payload)
         refresh_token = create_refresh_token(payload)
     else:
-        tokens = create_user_in_db(validated_user)
+        tokens = await create_user_in_db(validated_user)
         access_token = tokens[0]
         refresh_token = tokens[1]
     return Token(access_token=access_token, refresh_token=refresh_token, token_type="bearer")
@@ -100,7 +100,7 @@ async def update_user(user_id: Annotated[int, Depends(CheckJwt())]):
     token = await db.redis_client.get(f"{user_id}:oauth")
 
     # RETRIEVE USER DETAILS FROM TWITTER/X
-    current_user = fetch_user(token=token)
+    current_user = await fetch_user(token=token)
 
     # VALIDATE AGAINST PYDANTIC MODEL
     validated_user = BaseUser(id=user_id,

@@ -1,10 +1,11 @@
-from utils.AuthUtils import auth_url
 from config.settings import token_uri, JWT_SECRET_KEY, ALGORITHM
 from config import db
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2AuthorizationCodeBearer
 from jwt.exceptions import InvalidTokenError, ExpiredSignatureError
+from starlette_context import context
 from typing import Annotated
+from utils.AuthUtils import auth_url
 import jwt
 
 oauth2_scheme = OAuth2AuthorizationCodeBearer(tokenUrl=token_uri, 
@@ -66,5 +67,6 @@ class CheckJwt:
             elif self.dict_format is True:
                 return payload
             else:
+                context["user_id"] = user_id
                 return user_id
     

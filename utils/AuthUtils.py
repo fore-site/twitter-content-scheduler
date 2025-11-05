@@ -1,14 +1,24 @@
 from authlib.integrations.httpx_client import AsyncOAuth2Client
 from config.settings import client_id, client_secret, token_uri, redirect_uri, authorize_url, scope, JWT_SECRET_KEY, ALGORITHM
-from config.db import redis_client
 from datetime import timedelta, datetime, timezone
-from utils.TwitterUtils import update_oauth_token
+from config.db import redis_client
+from starlette_context import context
 import base64
 import hashlib
 import jwt
 import os
 import re
 import uuid
+
+async def update_oauth_token(token, refresh_token = None, access_token = None):    
+    # SAVE TOKEN TO REDIS, THIS IS A TEMPORARY STORAGE
+    if refresh_token:
+        user_id = context.get("user_id")
+        key = f"{user_id}:oauth"
+        await redis_client.set(key, token)
+    else:
+        print("Unable to save token in redis")
+        return
 
 # GENERATE TWITTER CLIENT SESSION
 twitter_client = AsyncOAuth2Client(client_id=client_id,
@@ -48,3 +58,4 @@ def create_refresh_token(data: dict):
 
 code_verifier, code_challenge = generate_verifier()
 auth_url, state = twitter_client.create_authorization_url(url=authorize_url, code_verifier=code_verifier)
+

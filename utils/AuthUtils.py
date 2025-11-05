@@ -33,14 +33,14 @@ def generate_verifier():
 # CREATE JWT ACCESS TOKEN
 def create_access_token(data: dict):
     to_encode = data.copy()
-    expire = datetime.now(timezone) + timedelta(minutes=30)
+    expire = datetime.now(timezone.utc) + timedelta(minutes=30)
     to_encode.update({"exp": expire, "jti": uuid.uuid4, "type": "access"})
     encoded_access_token = jwt.encode(to_encode, JWT_SECRET_KEY, algorithm=ALGORITHM)
     return encoded_access_token
 
 def create_refresh_token(data: dict):
     to_encode = data.copy()
-    expire = datetime.now(timezone) + timedelta(days=1)
+    expire = datetime.now(timezone.utc) + timedelta(days=1)
     to_encode.update({"exp": expire, "jti": uuid.uuid4, "type": "refresh"})
     encoded_refresh_token = jwt.encode(to_encode, JWT_SECRET_KEY, algorithm=ALGORITHM)
     return encoded_refresh_token

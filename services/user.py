@@ -49,6 +49,7 @@ async def get_access_refresh_token() -> Token:
     # CHECK IF USER ALREADY EXISTS IN DATABASE, ELSE CREATE NEW USER
     payload = {"sub": validated_user.id}
     user_exists_in_db = await db.redis_client.exists(f"{validated_user.id}:oauth")
+    
     if user_exists_in_db:
         access_token = create_access_token(payload)
         refresh_token = create_refresh_token(payload)

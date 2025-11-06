@@ -2,9 +2,10 @@ from datetime import datetime, timedelta
 from pydantic import BaseModel, field_validator, ValidationInfo
 from config.db import db_pool
 from models.TypeModel import PostStatus
+from starlette_context import context
 
-class UpdatePost(BaseModel):
-    """Table posts. Model for updating posts."""
+class BasePost(BaseModel):
+    """Table posts. Model for creating and updating posts."""
     content: str
     post_img: str | None = None
     days: int = 0
@@ -24,7 +25,7 @@ class UpdatePost(BaseModel):
                 users
             WHERE
                 id = %(user_id)s                     
-        """, {'user_id': info.data["user_id"]})
+        """, {'user_id': int(context.get("user_id"))})
             result = await cur.fetchone()
         is_premium, = result
 
@@ -44,12 +45,7 @@ class UpdatePost(BaseModel):
         scheduled_time = timedelta(day=day, minute=minute, hour=hour) + datetime.now()
         return scheduled_time
 
-class PostIn(UpdatePost):
-    """Table Posts. Model for creating posts."""
-    id: int
-    user_id: int
-
-class PostOut(UpdatePost):
+class PostOut(BasePost):
     """Table Posts. Model for output posts"""
     id: int
     user_id: int

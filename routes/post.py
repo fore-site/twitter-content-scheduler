@@ -5,7 +5,7 @@ from utils.dependencies import CheckJwt
 from utils.tokenUtils import fetch_oauth_from_redis
 from config import db
 from config.db import redis_client
-from models.PostModel import PostIn, UpdatePost
+from models.PostModel import PostIn, BasePost
 from services.post import create_post, update_post
 
 router = APIRouter()
@@ -22,6 +22,6 @@ async def get_post(user_id: Annotated[int, Depends(CheckJwt)]):
 async def make_post(post: Annotated[PostIn, Depends(create_post)]):
     return post
 
-@router.put("/posts/{post_id}", response_model=UpdatePost)
-async def post_update(post_id: int, updated_post: Annotated[UpdatePost, Depends(update_post)]):
+@router.put("/posts/{post_id}", response_model=BasePost)
+async def post_update(post_id: int, updated_post: Annotated[BasePost, Depends(update_post)]):
     return updated_post

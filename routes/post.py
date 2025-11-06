@@ -16,8 +16,8 @@ async def get_post(user_id: Annotated[int, Depends(CheckJwt)]):
     tweets = async_tweets.json()
     return tweets
 
-@router.post("/posts", response_model=PostIn, status_code=status.HTTP_201_CREATED)
-async def make_post(post: Annotated[PostIn, Depends(create_post)]):
+@router.post("/posts", response_model=BasePost, status_code=status.HTTP_201_CREATED)
+async def make_post(post: Annotated[BasePost, Depends(create_post)]):
     return post
 
 @router.put("/posts/{post_id}", response_model=BasePost)

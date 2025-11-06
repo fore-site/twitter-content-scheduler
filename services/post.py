@@ -1,11 +1,11 @@
 from config import db
 from fastapi import Depends, HTTPException, status
-from models.PostModel import PostIn, BasePost
+from models.PostModel import BasePost
 from models.TypeModel import PostStatus
 from typing import Annotated
 from utils.dependencies import CheckJwt
 
-async def create_post(user_id: Annotated[int, Depends(CheckJwt)], post_body: PostIn):
+async def create_post(user_id: Annotated[int, Depends(CheckJwt)], post_body: BasePost):
     async with db.db_pool:
         async with db.db_pool.connection() as conn:
             async with conn.cursor() as cur:

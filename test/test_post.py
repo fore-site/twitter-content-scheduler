@@ -10,6 +10,7 @@ data = {
 
 def test_create_post():
     make_post = requests.post("http://127.0.0.1:5000/posts", json=data, headers=headers)
+    make_post.raise_for_status()
     post = make_post.json()
     assert post is not None
 

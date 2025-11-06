@@ -3,9 +3,7 @@ from typing import Annotated
 from utils.AuthUtils import twitter_client
 from utils.dependencies import CheckJwt
 from utils.tokenUtils import fetch_oauth_from_redis
-from config import db
-from config.db import redis_client
-from models.PostModel import PostIn, BasePost
+from models.PostModel import BasePost
 from services.post import create_post, update_post
 
 router = APIRouter()

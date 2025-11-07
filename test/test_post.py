@@ -1,11 +1,13 @@
 import requests 
 headers = {
-    "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMTYyNDE5Njc3OTE1NzM0MDE3IiwiZXhwIjoxNzYyNTQzNTQzLCJqdGkiOiI2ZGYyNzAyYi1iYTc3LTQ1YTItOThlOC01MDI2NzlkM2M1MDIiLCJ0eXBlIjoiYWNjZXNzIn0.oGttue0wTUvle-OsfvRIMUbV5AvimOna-pz7WWeOGus"
+    "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMTYyNDE5Njc3OTE1NzM0MDE3IiwiZXhwIjoxNzYyNTQ1NDcxLCJqdGkiOiIzY2Y3ZTg0Yi0wYjg2LTQ2M2QtOTM5ZC03ODNjYjZjOGU0MDEiLCJ0eXBlIjoiYWNjZXNzIn0.vur8Rn_iXevdS9jWPUcN7CljECulpb-OrxQOa6bgltk"
 }
 
 data = {
-    "content": "Hello Twitte/r",
-    "hours": 4,
+    "content": "Hello Twitte/r, WAGA TOMO YO!!",
+    "hours": 1,
+    "days": 2,
+    "minutes": 30
 }
 
 # def test_create_post():
@@ -15,7 +17,7 @@ data = {
 #     assert post is not None
 
 
-make_post = requests.post("http://127.0.0.1:5000/posts", json=data, headers=headers)
+make_post = requests.put("http://127.0.0.1:5000/posts/4", json=data, headers=headers)
 post = make_post.json()
 print(post)
 

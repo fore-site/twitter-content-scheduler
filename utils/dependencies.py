@@ -38,11 +38,11 @@ class CheckJwt:
         """Callable that runs in a path operation function."""
         try:
             payload = jwt.decode(token, JWT_SECRET_KEY, algorithms=[ALGORITHM])
-        except InvalidTokenError:
-            raise self.credentials_exceptions
         except ExpiredSignatureError:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
                              detail="JWT token expired")
+        except InvalidTokenError:
+            raise self.credentials_exceptions
         else:
         # CHECK IF TOKEN EXISTS IN REDIS BLOCKLIST
             jti = payload.get("jti")

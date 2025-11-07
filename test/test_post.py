@@ -1,10 +1,10 @@
 import requests 
 headers = {
-    "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMTYyNDE5Njc3OTE1NzM0MDE3IiwiZXhwIjoxNzYyNTM5ODk0LCJqdGkiOiI3MGE2ZTA3Ni05MjJlLTQ1YTQtOTQ3Ny0wOTg2MjJlY2MxZGUiLCJ0eXBlIjoiYWNjZXNzIn0.8NrkAX8X-WdESuTxHJk4-GXHtxfGugroeoH1Pw8ZIfA"
+    "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMTYyNDE5Njc3OTE1NzM0MDE3IiwiZXhwIjoxNzYyNTQzNTQzLCJqdGkiOiI2ZGYyNzAyYi1iYTc3LTQ1YTItOThlOC01MDI2NzlkM2M1MDIiLCJ0eXBlIjoiYWNjZXNzIn0.oGttue0wTUvle-OsfvRIMUbV5AvimOna-pz7WWeOGus"
 }
 
 data = {
-    "content": "Hello Twitter",
+    "content": "Hello Twitte/r",
     "hours": 4,
 }
 

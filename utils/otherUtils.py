@@ -21,23 +21,22 @@ async def fetch_oauth_from_redis(key):
     deserialized_token = json.loads(token)
     return deserialized_token
 
-async def check_character_limit(content: str, user_id: int) -> None:
-    async with db_pool:
-        async with db_pool.connection() as conn:
-            async with conn.cursor() as cur:
-                await cur.execute("""
+async def check_character_limit(content: str, user_id: int) -> bool:
+    async with db_pool.connection() as conn:
+        async with conn.cursor() as cur:
+            await cur.execute("""
             SELECT 
                 is_premium
             FROM
                 users
             WHERE
                 id = %(user_id)s                     
-        """, {'user_id': user_id})
-                result = await cur.fetchone()
-        is_premium, = result
+        """, {"user_id": user_id})
+            result = await cur.fetchone()
+    is_premium, = result
 
-        if is_premium is None and len(content) > 280:
-            raise ValueError("Maximum character limit for non-premium users is 250")
-        elif is_premium and len(content) > 25000:
-            raise ValueError("Maximum character count for premium exceeded.")
-        return
+    if not is_premium and len(content) > 280:
+        raise ValueError("Maximum character limit for non-premium users is 250")
+    elif is_premium and len(content) > 25000:
+        raise ValueError("Maximum character count for premium exceeded.")
+    return True

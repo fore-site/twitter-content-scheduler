@@ -34,7 +34,7 @@ class CheckJwt:
         headers={"WWW-Authenticate": "Bearer"}
     )
     
-    async def __call__(self, token: Annotated[str, Depends(oauth2_scheme)]):
+    async def __call__(self, token: Annotated[str, Depends(oauth2_scheme)]) -> int:
         """Callable that runs in a path operation function."""
         try:
             payload = jwt.decode(token, JWT_SECRET_KEY, algorithms=[ALGORITHM])
@@ -54,19 +54,15 @@ class CheckJwt:
             user_id = payload.get("sub")
             token_type = payload.get("type")
         
-            if user_id is None:
-                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
-                detail="User not found.")
-            elif self.verify_type is True:
-                if self.refresh is False and token_type == "refresh":
+            if self.verify_type:
+                if not self.refresh and token_type == "refresh":
                     raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, 
                                 detail="Access token required")
-                elif self.refresh is True and token_type == "access":
+                elif self.refresh and token_type == "access":
                     raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, 
                                     detail="Refresh token required.")
-            elif self.dict_format is True:
+            if self.dict_format:
                 return payload
-            else:
-                context["user_id"] = user_id
-                return user_id
+            context["user_id"] = user_id
+            return int(user_id)
     

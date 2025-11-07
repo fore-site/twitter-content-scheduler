@@ -1,3 +1,4 @@
+DELETE FROM users WHERE username = 'fore_site';
 DROP TABLE users CASCADE;
 DROP TABLE posts;
 
@@ -30,5 +31,5 @@ CREATE TABLE posts (
     created_at TIMESTAMPTZ DEFAULT NOW(),
     scheduled_time TIMESTAMPTZ,
     post_status postStatus NOT NULL DEFAULT 'pending',
-    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE
+    user_id BIGINT REFERENCES users(id) ON DELETE CASCADE
 );

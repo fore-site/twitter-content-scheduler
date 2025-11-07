@@ -9,7 +9,7 @@ async def create_post(user_id: Annotated[int, Depends(CheckJwt)], post_body: Bas
     async with db.db_pool:
         async with db.db_pool.connection() as conn:
             async with conn.cursor() as cur:
-                cur.execute("""
+                await cur.execute("""
             INSERT INTO posts (content, post_img, scheduled_time, user_id)
             VALUES 
             (%s, %s, %s, %s)            
@@ -17,14 +17,13 @@ async def create_post(user_id: Annotated[int, Depends(CheckJwt)], post_body: Bas
                 post_body.post_img, 
                 post_body.scheduled_time, 
                 user_id))
-        await conn.commit()
     return post_body
 
 async def update_post(post_id: int, user_id: Annotated[int, Depends(CheckJwt)], post_body: BasePost):
     async with db.db_pool:
         async with db.db_pool.connection() as conn:
             async with conn.cursor() as cur:
-                cur.execute("""
+                await cur.execute("""
             UPDATE posts
             SET content = %(content)s,
                 post_img = %(post_img)s,
@@ -38,5 +37,4 @@ async def update_post(post_id: int, user_id: Annotated[int, Depends(CheckJwt)], 
           "user_id": user_id,
           "id": post_id,
           "post_status": PostStatus.sent})
-        conn.commit()
     return post_body

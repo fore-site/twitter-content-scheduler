@@ -24,7 +24,6 @@ async def create_user_in_db(user) -> tuple:
                   user.display_name, 
                   user.profile_img, 
                   user.is_premium))
-        await conn.commit()
         
     # SAVE OAUTH TOKEN TO REDIS
     serialized_token = json.dumps(twitter_client.token)

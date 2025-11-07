@@ -9,9 +9,9 @@ class BasePost(BaseModel):
     content: str
     post_img: str | None = None
     days: int = 0
-    hours: int = 0
+    hours: int  = 0
     minutes: int = 0
-    scheduled_time: datetime
+    scheduled_time: datetime | None = None
 
     @field_validator('content', mode='after')
     @classmethod

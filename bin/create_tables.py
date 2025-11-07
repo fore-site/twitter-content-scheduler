@@ -1,18 +1,27 @@
 # APPEND ROOT DIRECTORY TO SYS PATH TO ALLOW FILE IMPORTS
+from psycopg_pool import AsyncConnectionPool
 from os import path
 import sys
 sys.path.append(path.dirname(path.dirname(__file__)))
 
-from config.db import db_pool, asyncio
+import asyncio
+import platform
+from config.settings import DB_URI
 import aiofiles
+
+# MAKE ASYNCIO COMPATIBLE WITH PSYCOPG
+if platform.system() == "Windows":
+    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
 ## CREATE TABLES IN DATABASE 
 async def main():
-    async with db_pool.connection() as conn:
+    pool = AsyncConnectionPool(conninfo=DB_URI, open=False)
+    await pool.open()
+    async with pool.connection() as conn:
         async with aiofiles.open('./init_db.sql', 'r') as f:
             sql_script = await f.read()
         await conn.execute(sql_script)
-        await conn.commit()
+    await pool.close()
 
 if __name__ == "__main__":
     asyncio.run(main())

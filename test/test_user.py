@@ -1,7 +1,7 @@
-import requests
-import jwt
-from jwt.exceptions import ExpiredSignatureError, InvalidTokenError
 from datetime import datetime, timedelta, timezone
+from jwt.exceptions import ExpiredSignatureError, InvalidTokenError, InvalidAlgorithmError, InvalidSignatureError
+import jwt
+import requests
 import time
 
 header = {
@@ -14,17 +14,21 @@ header = {
 #     res = refresh.json()
 #     assert res is not None
 
-refresh = requests.get("http://127.0.0.1:5000/refresh", headers=header)
-res = refresh.json()
-print(res)
+# refresh = requests.get("http://127.0.0.1:5000/refresh", headers=header)
+# res = refresh.json()
+# print(res)
 
-# token = jwt.encode({"sub": 123, "exp": datetime.now(timezone.utc) + timedelta(seconds=3)}, key="hehehe")
+token = jwt.encode({"sub": 123, "exp": datetime.now(timezone.utc) + timedelta(seconds=3)}, "secret", "HS256")
+print(token)
+time.sleep(1)
 
-# time.sleep(3)
-
-# try:
-#     t = jwt.decode(token, key="hehehe")
-# except ExpiredSignatureError:
-#     print("expired")
-# else:
-#     print(t)
+try:
+    t = jwt.decode(token, key="secret", algorithms=["HS256"])
+except ExpiredSignatureError:
+    print("expired")
+except InvalidAlgorithmError:
+    print("Algorithm")
+except InvalidSignatureError:
+    print("Signature")
+else:
+    print(t)

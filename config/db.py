@@ -8,7 +8,7 @@ import platform
 if platform.system() == "Windows":
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
-db_pool = AsyncConnectionPool(conninfo=DB_URI)
+db_pool = AsyncConnectionPool(conninfo=DB_URI, open=False)
 
 import redis.asyncio as aioredis
 

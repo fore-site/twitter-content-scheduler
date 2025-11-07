@@ -23,11 +23,12 @@ async def create_post(user_id: Annotated[int, Depends(CheckJwt())], post_body: B
                 post_body.post_img, 
                 post_body.scheduled_time, 
                 user_id))
-    return post_body
+        await db.db_pool.close()
+        return post_body
 
 async def update_post(post_id: int, user_id: Annotated[int, Depends(CheckJwt())], post_body: BasePost):
     try:
-        check_limit = check_character_limit(post_body.content, user_id)
+        check_character_limit(post_body.content, user_id)
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, 
                           detail=e)
@@ -48,4 +49,5 @@ async def update_post(post_id: int, user_id: Annotated[int, Depends(CheckJwt())]
           "user_id": user_id,
           "id": post_id,
           "post_status": PostStatus.sent})
-        return post_body
+    await db.db_pool.close()    
+    return post_body

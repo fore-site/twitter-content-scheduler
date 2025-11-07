@@ -12,9 +12,10 @@ from models.TokenModel import Token
 import json
 
 async def create_user_in_db(user) -> tuple:
-    async with db.db_pool.connection() as conn:
-        async with conn.cursor() as cur:
-            await cur.execute("""
+    async with db.db_pool:
+        async with db.db_pool.connection() as conn:
+            async with conn.cursor() as cur:
+                await cur.execute("""
             INSERT INTO users (id, username, display_name, profile_img, is_premium)
             VALUES
                 (%s, %s, %s, %s, %s)
@@ -58,9 +59,10 @@ async def get_access_refresh_token() -> Token:
     return Token(access_token=access_token, refresh_token=refresh_token, token_type="bearer")
 
 async def get_current_user(user_id: Annotated[int, Depends(CheckJwt())]):
-    async with db.db_pool.connection() as conn:
-        async with conn.cursor(row_factory=dict_row) as cur:
-            await cur.execute("""
+    async with db.db_pool:
+        async with db.db_pool.connection() as conn:
+            async with conn.cursor(row_factory=dict_row) as cur:
+                await cur.execute("""
                     SELECT 
                         *, 
                         (SELECT COUNT(*) FROM posts WHERE posts.user_id = %(user_id)s AND posts.post_status ='pending') AS pending_posts, 
@@ -85,7 +87,6 @@ async def get_current_active_user(current_user: Annotated[UserOut, Depends(get_c
         return current_user       
 
 async def get_new_access_token(user_id: Annotated[int, Depends(CheckJwt(refresh=True))]):
-    print(user_id)
     new_access_token = create_access_token({"sub": user_id})
     return Token(access_token=new_access_token, token_type="bearer")
 
@@ -109,9 +110,10 @@ async def update_user(user_id: Annotated[int, Depends(CheckJwt())]):
                   profile_img=current_user["data"].get("profile_image_url"), 
                   is_premium=current_user["data"].get("verified"))
 
-    async with db.db_pool.connection() as conn:
-        async with conn.cursor() as cur:
-            await cur.execute("""
+    async with db.db_pool:
+        async with db.db_pool.connection() as conn:
+            async with conn.cursor() as cur:
+                cur.execute("""
             UPDATE users
             SET username = %(username)s, 
                 display_name = %(name)s,

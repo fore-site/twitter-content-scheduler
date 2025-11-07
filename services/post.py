@@ -6,9 +6,9 @@ from typing import Annotated
 from utils.dependencies import CheckJwt
 from utils.otherUtils import check_character_limit
 
-async def create_post(user_id: Annotated[int, Depends(CheckJwt)], post_body: BasePost):
+async def create_post(user_id: Annotated[int, Depends(CheckJwt())], post_body: BasePost):
     try:
-        check_character_limit(post_body.content, user_id)
+        await check_character_limit(post_body.content, user_id)
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, 
                           detail=e)
@@ -26,7 +26,7 @@ async def create_post(user_id: Annotated[int, Depends(CheckJwt)], post_body: Bas
                 user_id))
         return post_body
 
-async def update_post(post_id: int, user_id: Annotated[int, Depends(CheckJwt)], post_body: BasePost):
+async def update_post(post_id: int, user_id: Annotated[int, Depends(CheckJwt())], post_body: BasePost):
     try:
         check_character_limit(post_body.content, user_id)
     except ValueError as e:

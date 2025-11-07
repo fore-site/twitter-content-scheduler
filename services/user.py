@@ -5,7 +5,7 @@ from typing import Annotated
 from utils.AuthUtils import twitter_client, create_access_token, create_refresh_token
 from utils.dependencies import CheckJwt
 from utils.TwitterUtils import fetch_user
-from utils.tokenUtils import fetch_oauth_from_redis
+from utils.otherUtils import fetch_oauth_from_redis
 from models.UserModel import BaseUser, UserOut
 from models.TypeModel import UserStatus
 from models.TokenModel import Token

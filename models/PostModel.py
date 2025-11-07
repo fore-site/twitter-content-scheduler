@@ -1,8 +1,6 @@
 from datetime import datetime, timedelta
 from pydantic import BaseModel, field_validator, ValidationInfo
-from config.db import db_pool
 from models.TypeModel import PostStatus
-from starlette_context import context
 
 class BasePost(BaseModel):
     """Table posts. Model for creating and updating posts."""

@@ -3,8 +3,8 @@ from typing import Annotated
 from utils.AuthUtils import twitter_client
 from utils.dependencies import CheckJwt
 from utils.otherUtils import fetch_oauth_from_redis
-from models.PostModel import BasePost
-from services.post import create_post, update_post
+from models.PostModel import BasePost, PostOut
+from services.post import create_post, update_post, get_post
 
 router = APIRouter()
 
@@ -15,6 +15,10 @@ async def get_post(user_id: Annotated[int, Depends(CheckJwt)]):
     async_tweets = await twitter_client.get(f"https://api.x.com/2/users/{user_id}/tweets")
     tweets = async_tweets.json()
     return tweets
+
+@router.get("/posts/{post_id}", response_model=PostOut)
+async def fetch_post(post: Annotated[PostOut, Depends(get_post)]):
+    return post
 
 @router.post("/posts", response_model=BasePost, status_code=status.HTTP_201_CREATED)
 async def make_post(post: Annotated[BasePost, Depends(create_post)]):

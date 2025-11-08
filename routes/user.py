@@ -1,5 +1,6 @@
 from utils import AuthUtils as auth
-from fastapi import APIRouter, Request, Response, Depends, HTTPException, status
+from authlib.integrations.base_client.errors import OAuthError
+from fastapi import APIRouter, Request, Depends, HTTPException, status
 from fastapi.responses import RedirectResponse
 from models.UserModel import BaseUser, UserOut
 from models.TokenModel import Token
@@ -31,6 +32,9 @@ async def callback_home(request: Request):
             status_code=status.HTTP_504_GATEWAY_TIMEOUT,
             detail="Oauth service took too long to respond. Please try again."
         )
+    except OAuthError as e:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, 
+                            detail=str(e))
     # response.delete_cookie(key="oauth_state")
     access_refresh_token = await get_access_refresh_token()
     return access_refresh_token

@@ -6,7 +6,7 @@ sys.path.append(path.dirname(path.dirname(__file__)))
 
 import asyncio
 import platform
-from config.settings import DB_URI
+from config.settings import DB_URI, REDIS_URI
 import aiofiles
 
 # MAKE ASYNCIO COMPATIBLE WITH PSYCOPG
@@ -22,6 +22,10 @@ async def main():
             sql_script = await f.read()
         await conn.execute(sql_script)
     await pool.close()
+
+import redis
+r = redis.from_url(REDIS_URI)
+r.flushdb()
 
 if __name__ == "__main__":
     asyncio.run(main())

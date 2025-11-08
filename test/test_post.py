@@ -1,6 +1,6 @@
 import requests 
 headers = {
-    "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMTYyNDE5Njc3OTE1NzM0MDE3IiwiZXhwIjoxNzYyNTQ1NDcxLCJqdGkiOiIzY2Y3ZTg0Yi0wYjg2LTQ2M2QtOTM5ZC03ODNjYjZjOGU0MDEiLCJ0eXBlIjoiYWNjZXNzIn0.vur8Rn_iXevdS9jWPUcN7CljECulpb-OrxQOa6bgltk"
+    "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMTYyNDE5Njc3OTE1NzM0MDE3IiwiZXhwIjoxNzYyNTQ3OTQxLCJqdGkiOiJhOWMzOWVjYS0yOTAyLTQ5OTYtODk3My04ZDZmZjJkNTJiNjgiLCJ0eXBlIjoiYWNjZXNzIn0.8ZYMBfldc1cbLEj8zLCcdRxWT_J48fbdtlf9Fzj6AlA"
 }
 
 data = {
@@ -16,8 +16,7 @@ data = {
 #     post = make_post.json()
 #     assert post is not None
 
-
-make_post = requests.put("http://127.0.0.1:5000/posts/4", json=data, headers=headers)
+make_post = requests.get("http://127.0.0.1:5000/posts/4", headers=headers)
 post = make_post.json()
 print(post)
 

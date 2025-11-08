@@ -21,7 +21,7 @@ class BasePost(BaseModel):
         scheduled_time = timedelta(days=day, minutes=minute, hours=hour) + datetime.now()
         return scheduled_time
 
-class PostOut(BasePost):
+class PostOut(BaseModel):
     """Table Posts. Model for output posts"""
     id: int
     user_id: int

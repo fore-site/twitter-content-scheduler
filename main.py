@@ -11,12 +11,12 @@ async def lifespan(instance: FastAPI):
     
     print("Starting FastAPI server...")
 
-    instance.async_pool = db_pool
+    await db_pool.open()
 
     yield
 
     print("Shutting down FastAPI server...")
-    await instance.async_pool.close()
+    await db_pool.close()
 
 app = FastAPI(lifespan=lifespan)
 

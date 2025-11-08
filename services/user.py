@@ -12,10 +12,9 @@ from models.TokenModel import Token
 import json
 
 async def create_user_in_db(user) -> tuple:
-    async with db.db_pool:
-        async with db.db_pool.connection() as conn:
-            async with conn.cursor() as cur:
-                await cur.execute("""
+    async with db.db_pool.connection() as conn:
+        async with conn.cursor() as cur:
+            await cur.execute("""
             INSERT INTO users (id, username, display_name, profile_img, is_premium)
             VALUES
                 (%s, %s, %s, %s, %s)
@@ -59,9 +58,8 @@ async def get_access_refresh_token() -> Token:
     return Token(access_token=access_token, refresh_token=refresh_token, token_type="bearer")
 
 async def get_current_user(user_id: Annotated[int, Depends(CheckJwt())]):
-    async with db.db_pool:
-        async with db.db_pool.connection() as conn:
-            async with conn.cursor(row_factory=dict_row) as cur:
+    async with db.db_pool.connection() as conn:
+        async with conn.cursor(row_factory=dict_row) as cur:
                 await cur.execute("""
                     SELECT 
                         *, 
@@ -71,7 +69,7 @@ async def get_current_user(user_id: Annotated[int, Depends(CheckJwt())]):
                         FROM users 
                         WHERE users.id = %(user_id)s               
                     """, {"user_id": user_id})
-            result = await cur.fetchall()
+        result = await cur.fetchall()
     result_dict = result[0]
     user = UserOut(**result_dict)
     return user
@@ -110,10 +108,9 @@ async def update_user(user_id: Annotated[int, Depends(CheckJwt())]):
                   profile_img=current_user["data"].get("profile_image_url"), 
                   is_premium=current_user["data"].get("verified"))
 
-    async with db.db_pool:
-        async with db.db_pool.connection() as conn:
-            async with conn.cursor() as cur:
-                cur.execute("""
+    async with db.db_pool.connection() as conn:
+        async with conn.cursor() as cur:
+            await cur.execute("""
             UPDATE users
             SET username = %(username)s, 
                 display_name = %(name)s,

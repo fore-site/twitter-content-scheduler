@@ -22,7 +22,6 @@ async def fetch_oauth_from_redis(key):
     return deserialized_token
 
 async def check_character_limit(content: str, user_id: int) -> bool:
-    await db_pool.open()
     async with db_pool.connection() as conn:
         async with conn.cursor() as cur:
             await cur.execute("""

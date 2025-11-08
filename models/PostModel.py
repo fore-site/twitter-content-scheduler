@@ -4,7 +4,7 @@ from models.TypeModel import PostStatus
 
 class BasePost(BaseModel):
     """Table posts. Model for creating and updating posts."""
-    content: str
+    content: str | None
     post_img: str | None = None
     days: int = 0
     hours: int  = 0

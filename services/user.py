@@ -60,16 +60,16 @@ async def get_access_refresh_token() -> Token:
 async def get_current_user(user_id: Annotated[int, Depends(CheckJwt())]):
     async with db.db_pool.connection() as conn:
         async with conn.cursor(row_factory=dict_row) as cur:
-                await cur.execute("""
+            await cur.execute("""
                     SELECT 
-                        *, 
+                        u.*, 
                         (SELECT COUNT(*) FROM posts WHERE posts.user_id = %(user_id)s AND posts.post_status ='pending') AS pending_posts, 
                         (SELECT COUNT(*) FROM posts WHERE posts.user_id = %(user_id)s AND posts.post_status = 'sent') AS sent_posts, 
-                        (SELECT COUNT(*) FROM posts WHERE posts.user_id = %(user_id)s AND posts.post_status = 'failed') AS failed_posts, 
-                        FROM users 
-                        WHERE users.id = %(user_id)s               
+                        (SELECT COUNT(*) FROM posts WHERE posts.user_id = %(user_id)s AND posts.post_status = 'failed') AS failed_posts 
+                        FROM users AS u
+                        WHERE u.id = %(user_id)s               
                     """, {"user_id": user_id})
-        result = await cur.fetchall()
+            result = await cur.fetchall()
     result_dict = result[0]
     user = UserOut(**result_dict)
     return user

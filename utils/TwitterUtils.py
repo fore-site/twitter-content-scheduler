@@ -12,6 +12,9 @@ async def fetch_user(token: str | None = None):
             status_code=status.HTTP_504_GATEWAY_TIMEOUT,
             detail="Oauth service took too long to respond. Please try again."
         )
+    except httpx.ConnectError:
+        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, 
+                            detail="Failed to connect to oauth provider.")
     else:
         current_user = async_current_user.json()
         return current_user

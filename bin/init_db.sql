@@ -26,7 +26,7 @@ CREATE TABLE users (
 
 CREATE TABLE posts (
     id SERIAL PRIMARY KEY,
-    content VARCHAR NOT NULL,
+    content VARCHAR DEFAULT NULL,
     post_img VARCHAR DEFAULT NULL,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     scheduled_time TIMESTAMPTZ,

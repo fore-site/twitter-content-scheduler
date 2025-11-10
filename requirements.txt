@@ -9,4 +9,4 @@ Authlib
 httpx
 pyjwt
 pytest
-starlette-context
+celery

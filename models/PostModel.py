@@ -4,8 +4,8 @@ from models.TypeModel import PostStatus
 
 class BasePost(BaseModel):
     """Table posts. Model for creating and updating posts."""
-    content: str | None = None
-    post_img: str | None = None
+    text: str | None = None
+    media: str | None = None
     days: int = 0
     hours: int  = 0
     minutes: int = 0
@@ -25,8 +25,8 @@ class PostOut(BaseModel):
     """Table Posts. Model for output posts"""
     id: int
     user_id: int
-    content: str
-    post_img: str | None = None
+    text: str
+    media: str | None = None
     scheduled_time: datetime
     created_at: datetime
     post_status: PostStatus

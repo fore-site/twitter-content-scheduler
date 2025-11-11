@@ -5,7 +5,7 @@ from models.TypeModel import PostStatus
 from psycopg.rows import dict_row
 from typing import Annotated
 from utils.dependencies import CheckJwt
-from utils.otherUtils import check_character_limit
+from utils.common import check_character_limit
 
 async def get_post(post_id: int, user_id: Annotated[int, Depends(CheckJwt())]):
     async with db.db_pool:
@@ -35,11 +35,11 @@ async def create_post(user_id: Annotated[int, Depends(CheckJwt())], post_body: B
         async with db.db_pool.connection() as conn:
             async with conn.cursor() as cur:
                 await cur.execute("""
-            INSERT INTO posts (content, post_img, scheduled_time, user_id)
+            INSERT INTO posts (text, media, scheduled_time, user_id)
             VALUES 
             (%s, %s, %s, %s)            
-            """, (post_body.content, 
-                post_body.post_img, 
+            """, (post_body.text, 
+                post_body.media, 
                 post_body.scheduled_time, 
                 user_id))
         return post_body
@@ -55,15 +55,15 @@ async def update_post(post_id: int, user_id: Annotated[int, Depends(CheckJwt())]
             async with conn.cursor() as cur:
                 await cur.execute("""
             UPDATE posts
-            SET content = %(content)s,
-                post_img = %(post_img)s,
+            SET text = %(text)s,
+                media = %(media)s,
                 scheduled_time = %(scheduled_time)s
             WHERE posts.user_id = %(user_id)s AND
                     posts.id = %(post_id)s AND
                     posts.post_status <> %(post_status)s
             RETURNING id
-    """, {"content": post_body.content, 
-          "post_img": post_body.post_img, 
+    """, {"text": post_body.text, 
+          "media": post_body.media, 
           "scheduled_time": post_body.scheduled_time,
           "user_id": user_id,
           "post_id": post_id,

@@ -1,7 +1,7 @@
 from authlib.integrations.httpx_client import AsyncOAuth2Client
 from config.settings import client_id, client_secret, token_uri, redirect_uri, authorize_url, scope, JWT_SECRET_KEY, ALGORITHM
 from datetime import timedelta, datetime, timezone
-from utils.otherUtils import update_oauth_token
+from utils.common import update_oauth_token
 import base64
 import hashlib
 import jwt

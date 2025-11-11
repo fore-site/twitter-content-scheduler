@@ -2,7 +2,7 @@ from fastapi import Depends, APIRouter, status
 from typing import Annotated
 from utils.AuthUtils import twitter_client
 from utils.dependencies import CheckJwt
-from utils.otherUtils import fetch_oauth_from_redis
+from utils.common import fetch_oauth_from_redis
 from models.PostModel import BasePost, PostOut
 from services.post import create_post, update_post, get_post
 

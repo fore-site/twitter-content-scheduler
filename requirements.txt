@@ -10,3 +10,4 @@ httpx
 pyjwt
 pytest
 celery
+python-multipart

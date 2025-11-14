@@ -1,5 +1,6 @@
-from fastapi import HTTPException, status
+from fastapi import HTTPException, status, UploadFile
 from utils.AuthUtils import twitter_client
+from utils.common import check_file_type
 import httpx
 
 async def fetch_user(token: str | None = None):
@@ -18,3 +19,23 @@ async def fetch_user(token: str | None = None):
     else:
         current_user = async_current_user.json()
         return current_user
+    
+class ChunkedUpload(object):
+
+    def __init__(self, file: UploadFile):
+        """Defines media tweet properties """
+        self.filename = file.filename
+        self.total_bytes = file.size
+        self.media_id = None
+        self.processing_info = None
+
+    def upload_init(self):
+        """Initializes Upload"""
+        try:
+            request_data = {
+                "command": "INIT",
+                "media_type": check_file_type(self.filename),
+            }
+        except ValueError as e:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, 
+                                detail=str(e))

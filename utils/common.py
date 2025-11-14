@@ -1,6 +1,7 @@
 from config.db import redis_client, db_pool
 from starlette_context import context
 import json
+import re
 
 async def update_oauth_token(token, refresh_token = None, access_token = None):    
     # SAVE TOKEN TO REDIS, THIS IS A TEMPORARY STORAGE
@@ -40,3 +41,17 @@ async def check_character_limit(content: str, user_id: int) -> bool:
     elif is_premium and len(content) > 25000:
         raise ValueError("Maximum character count for premium exceeded.")
     return True
+
+def check_file_type(filename) -> str:
+    img_extensions = ["png", "gif", "bmp", "webp", "jpeg", "pjpeg", "tiff"]
+    vid_extensions = ["mp4", "webm", "mp2t", "quicktime"]
+    
+    find_match = re.search("\.[^.]+$", filename)
+    match = find_match.group()
+
+    if match[1:] in img_extensions:
+        return f"image/{match[1:]}"
+    elif match[1:] in vid_extensions:
+        return f"video/{match[1:]}"
+    else:
+        raise ValueError("Unsupported media type.")

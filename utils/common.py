@@ -42,16 +42,27 @@ async def check_character_limit(content: str, user_id: int) -> bool:
         raise ValueError("Maximum character count for premium exceeded.")
     return True
 
-def check_file_type(filename) -> str:
+def check_file_type(filename, media_category=False) -> str:
     img_extensions = ["png", "gif", "bmp", "webp", "jpeg", "pjpeg", "tiff"]
     vid_extensions = ["mp4", "webm", "mp2t", "quicktime"]
-    
+    type_error = ValueError("Unsupported media type.")
+
     find_match = re.search("\.[^.]+$", filename)
     match = find_match.group()
+
+    if media_category:
+        if match[1:] == "gif":
+            return "gif"
+        elif match[1:] in img_extensions:
+            return "image"
+        elif match[1:] in vid_extensions:
+            return "video"
+        else: 
+            raise type_error
 
     if match[1:] in img_extensions:
         return f"image/{match[1:]}"
     elif match[1:] in vid_extensions:
         return f"video/{match[1:]}"
     else:
-        raise ValueError("Unsupported media type.")
+        raise type_error

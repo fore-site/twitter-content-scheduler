@@ -22,12 +22,13 @@ async def fetch_user(token: str | None = None):
     
 class ChunkedUpload(object):
 
-    def __init__(self, file: UploadFile):
+    def __init__(self, token: str, file: UploadFile):
         """Defines media tweet properties """
         self.filename = file.filename
         self.total_bytes = file.size
         self.media_id = None
         self.processing_info = None
+        twitter_client.token = token
 
     def upload_init(self):
         """Initializes Upload"""
@@ -35,7 +36,11 @@ class ChunkedUpload(object):
             request_data = {
                 "command": "INIT",
                 "media_type": check_file_type(self.filename),
+                "total_bytes": self.total_bytes,
+                "media_category": check_file_type(self.filename, media_category=True)
             }
         except ValueError as e:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, 
                                 detail=str(e))
+        else:
+            req = twitter_client.post(url="https://api.x.com/v2/media/upload")

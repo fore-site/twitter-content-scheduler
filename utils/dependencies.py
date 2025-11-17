@@ -3,6 +3,7 @@ from config import db
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2AuthorizationCodeBearer
 from jwt.exceptions import InvalidTokenError, ExpiredSignatureError
+from starlette_context import context
 from typing import Annotated
 from utils.AuthUtils import auth_url
 import jwt
@@ -62,5 +63,6 @@ class CheckJwt:
                                     detail="Refresh token required.")
             if self.dict_format:
                 return payload
+            context["user_id"] = user_id
             return int(user_id)
     

@@ -2,6 +2,7 @@ from fastapi import HTTPException, status, UploadFile
 from utils.AuthUtils import twitter_client
 from utils.common import check_file_type
 import httpx
+import logging
 
 async def fetch_user(token: str | None = None):
     if token:
@@ -54,4 +55,4 @@ class ChunkedUpload(object):
         else:
             media_id = req.json()['media_id']
             self.media_id = media_id
-            return {"media_id": media_id}
+            logging.info(f"Media ID generated: {media_id}")

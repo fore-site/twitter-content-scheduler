@@ -2,11 +2,15 @@ from config.db import redis_client, db_pool
 from starlette_context import context
 import json
 import re
+import logging
 
 async def update_oauth_token(token, refresh_token = None, access_token = None):    
     # SAVE TOKEN TO REDIS, THIS IS A TEMPORARY STORAGE
     if refresh_token:
         user_id = context.get("user_id")
+
+        logging.info(f"User ID from starlette context: {user_id}")
+        
         key = f"{user_id}:oauth"
 
         # SERIALIZE THE TOKEN TO AVOID REDIS DATATYPE ERROR
@@ -14,7 +18,7 @@ async def update_oauth_token(token, refresh_token = None, access_token = None):
 
         await redis_client.set(key, serialized_token)
     else:
-        print("Unable to save token in redis")
+        logging.error("Unable to save oauth token in redis. No refresh token")
         return
 
 async def fetch_oauth_from_redis(key):

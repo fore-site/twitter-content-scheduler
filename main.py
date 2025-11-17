@@ -2,6 +2,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from config.db import db_pool
 from routes import user, post, media
+import logging
 
 @asynccontextmanager
 async def lifespan(instance: FastAPI):

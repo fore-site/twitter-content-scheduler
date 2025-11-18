@@ -7,8 +7,7 @@ import logging
 async def update_oauth_token(token, refresh_token = None, access_token = None):    
     # SAVE TOKEN TO REDIS, THIS IS A TEMPORARY STORAGE
     if refresh_token or access_token:
-        # user_id = context.get("user_id")
-        user_id = 1162419677915734017
+        user_id = context.get("user_id")
 
         logging.info(f"User ID from starlette context: {user_id}")
         

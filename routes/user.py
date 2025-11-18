@@ -18,11 +18,6 @@ async def login_user():
 
 @router.get("/", response_model=Token)
 async def callback_home(request: Request):
-    # request_state = request.query_params.get("state")
-    # stored_state = request.cookies.get("oauth_state")
-
-    # if stored_state != request_state:
-    #     raise HTTPException(status_code=403, detail="Invalid state string.")
     try:
         token = await auth.twitter_client.fetch_token(url=auth.token_uri,
                                   authorization_response=str(request.url),
@@ -37,7 +32,7 @@ async def callback_home(request: Request):
                             detail=str(e))
     # response.delete_cookie(key="oauth_state")
     access_refresh_token = await get_access_refresh_token()
-    return access_refresh_token
+    return access_refresh_token     
 
 @router.get("/profile", response_model=UserOut)
 async def get_profile(current_user: Annotated[UserOut, Depends(get_current_active_user)]):

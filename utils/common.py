@@ -6,8 +6,9 @@ import logging
 
 async def update_oauth_token(token, refresh_token = None, access_token = None):    
     # SAVE TOKEN TO REDIS, THIS IS A TEMPORARY STORAGE
-    if refresh_token:
-        user_id = context.get("user_id")
+    if refresh_token or access_token:
+        # user_id = context.get("user_id")
+        user_id = 1162419677915734017
 
         logging.info(f"User ID from starlette context: {user_id}")
         
@@ -18,7 +19,7 @@ async def update_oauth_token(token, refresh_token = None, access_token = None):
 
         await redis_client.set(key, serialized_token)
     else:
-        logging.error("Unable to save oauth token in redis. No refresh token")
+        logging.error("Unable to save oauth token in redis. No refresh or access token")
         return
 
 async def fetch_oauth_from_redis(key):
@@ -51,7 +52,7 @@ def check_file_type(filename, media_category=False) -> str:
     vid_extensions = ["mp4", "webm", "mp2t", "quicktime"]
     type_error = ValueError("Unsupported media type.")
 
-    find_match = re.search("\.[^.]+$", filename)
+    find_match = re.search(r'\.[^.]+$', filename)
     match = find_match.group()
 
     if media_category:

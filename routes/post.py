@@ -9,8 +9,9 @@ from services.post import create_post, update_post, get_post
 router = APIRouter()
 
 @router.get("/get-post")
-async def get_x_post(user_id: Annotated[int, Depends(CheckJwt)]):
-    oauth_token = fetch_oauth_from_redis(f"{user_id}:oauth")
+async def get_x_post(user_id: Annotated[int, Depends(CheckJwt())]):
+    print(user_id)
+    oauth_token = await fetch_oauth_from_redis(f"{user_id}:oauth")
     twitter_client.token = oauth_token
     async_tweets = await twitter_client.get(f"https://api.x.com/2/users/{user_id}/tweets")
     tweets = async_tweets.json()

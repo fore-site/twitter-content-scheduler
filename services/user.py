@@ -49,6 +49,10 @@ async def get_access_refresh_token() -> Token:
     user_exists_in_db = await db.redis_client.exists(f"{validated_user.id}:oauth")
     
     if user_exists_in_db:
+        # SAVE NEW OAUTH TOKEN TO REDIS
+        serialized_token = json.dumps(twitter_client.token)
+        await db.redis_client.set(f"{validated_user.id}:oauth", serialized_token)
+        
         access_token = create_access_token(payload)
         refresh_token = create_refresh_token(payload)
     else:

@@ -1,4 +1,6 @@
 venv/
+config/__pycache__
 __pycache__/
 .env
 misc.py
+scheduler-app.log

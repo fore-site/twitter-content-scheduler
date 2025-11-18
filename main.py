@@ -5,18 +5,21 @@ from routes import user, post, media
 from starlette_context.middleware import ContextMiddleware
 from starlette_context import plugins
 import logging
+import logging.config
 
 @asynccontextmanager
 async def lifespan(instance: FastAPI):
     """FastAPI startup/shutdown event"""
+    logging.config.fileConfig('logging.conf')
+    logger = logging.getLogger()
     
-    print("Starting FastAPI server...")
+    logger.info("Starting FastAPI server...")
 
     await db_pool.open()
 
     yield
 
-    print("Shutting down FastAPI server...")
+    logger.info("Shutting down FastAPI server...")
     await db_pool.close()
 
 app = FastAPI(lifespan=lifespan)

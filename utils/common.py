@@ -4,12 +4,14 @@ import json
 import re
 import logging
 
+logger = logging.getLogger('fileLogger')
+
 async def update_oauth_token(token, refresh_token = None, access_token = None):    
     # SAVE TOKEN TO REDIS, THIS IS A TEMPORARY STORAGE
     if refresh_token or access_token:
         user_id = context.get("user_id")
 
-        logging.info(f"User ID from starlette context: {user_id}")
+        logger.info(f"User ID from starlette context: {user_id}")
         
         key = f"{user_id}:oauth"
 
@@ -18,7 +20,7 @@ async def update_oauth_token(token, refresh_token = None, access_token = None):
 
         await redis_client.set(key, serialized_token)
     else:
-        logging.error("Unable to save oauth token in redis. No refresh or access token")
+        logger.error("Unable to save oauth token in redis. No refresh or access token")
         return
 
 async def fetch_oauth_from_redis(key):

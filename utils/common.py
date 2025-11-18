@@ -1,4 +1,5 @@
 from config.db import redis_client, db_pool
+from fastapi import UploadFile
 from starlette_context import context
 import json
 import re
@@ -47,12 +48,12 @@ async def check_character_limit(content: str, user_id: int) -> bool:
         raise ValueError("Maximum character count for premium exceeded.")
     return True
 
-def check_file_type(filename, media_category=False) -> str:
+def check_file_type(file: UploadFile, media_category=False) -> str:
     img_extensions = ["png", "gif", "bmp", "webp", "jpeg", "pjpeg", "tiff"]
     vid_extensions = ["mp4", "webm", "mp2t", "quicktime"]
     type_error = ValueError("Unsupported media type.")
 
-    find_match = re.search(r'\.[^.]+$', filename)
+    find_match = re.search(r'\.[^.]+$', file.filename)
     match = find_match.group()
 
     if media_category:

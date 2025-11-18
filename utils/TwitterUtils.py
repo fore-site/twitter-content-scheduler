@@ -43,9 +43,9 @@ class ChunkedUpload(object):
         try:
             request_data = {
                 "command": "INIT",
-                "media_type": check_file_type(self.filename),
+                "media_type": check_file_type(self.file),
                 "total_bytes": self.total_bytes,
-                "media_category": check_file_type(self.filename, media_category=True)
+                "media_category": check_file_type(self.file, media_category=True)
             }
             req = await twitter_client.post(url=MEDIA_UPLOAD_ENDPOINT, data=request_data)
         except ValueError as e:
@@ -56,10 +56,9 @@ class ChunkedUpload(object):
         except httpx.ConnectError:
             raise bad_gateway_exception
         else:
-            media_id = req.json()['media_id']
-            self.media_id = media_id
-            logger.info(f"Media ID: {media_id}")
-    
+            self.media_id = req.json()['media_id']
+            logger.info(f"Media ID: {self.media_id}")
+            
     async def upload_append(self):
         """Uploads media in chunks and appends to chunks"""
         segment_id = 0
@@ -103,13 +102,17 @@ class ChunkedUpload(object):
         }
         try:
             req = await twitter_client.post(url=MEDIA_UPLOAD_ENDPOINT, data=request_data)
-            self.processing_info = req.json().get("processing_info", None)
         except httpx.ConnectTimeout:
             raise timeout_exception
         except httpx.ConnectError:
                 raise bad_gateway_exception
         else:
-            await self.check_status()
+            self.processing_info = req.json().get("processing_info", None)
+            res = await self.check_status()
+            if res is None:
+                return req.json()
+            else:
+                return res
     
     async def check_status(self):
         """Checks video processing status"""
@@ -118,6 +121,7 @@ class ChunkedUpload(object):
         state = self.processing_info["state"]
 
         logger.info(f"Media processing status: {state}")
+
         if state == u'succeeded':
             return
         elif state == u'failed':
@@ -127,7 +131,7 @@ class ChunkedUpload(object):
             )
         else:
             check_after = self.processing_info["check_after_secs"]
-            logging.info(f"Checking after {check_after}")
+            logging.info(f"Checking after {check_after} seconds")
 
             time.sleep(check_after)
 
@@ -146,4 +150,8 @@ class ChunkedUpload(object):
                 raise bad_gateway_exception
             else:
                 self.processing_info = req.json().get('processing_info', None)
-                await self.check_status()
+                res = await self.check_status()
+                if res is None:
+                    return req.json()
+                else:
+                    return res

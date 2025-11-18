@@ -12,6 +12,7 @@ redirect_uri = os.environ.get("REDIRECT_URI")
 token_uri = str("https://api.x.com/2/oauth2/token")
 authorize_url = str('https://x.com/i/oauth2/authorize')
 scope = "tweet.read tweet.write users.read offline.access media.write"
+MEDIA_UPLOAD_ENDPOINT = str("https://api.x.com/2/media/upload")
 
 # use "openssl rand -hex 32" to generate secret key
 JWT_SECRET_KEY = os.environ.get("JWT_SECRET_KEY")

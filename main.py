@@ -10,7 +10,7 @@ import logging.config
 @asynccontextmanager
 async def lifespan(instance: FastAPI):
     """FastAPI startup/shutdown event"""
-    logging.config.fileConfig('logging.conf')
+    logging.config.fileConfig('logging.conf', disable_existing_loggers=False)
     logger = logging.getLogger()
     
     logger.info("Starting FastAPI server...")

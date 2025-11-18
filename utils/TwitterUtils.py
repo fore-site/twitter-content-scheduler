@@ -7,6 +7,7 @@ import logging
 logger = logging.getLogger()
 
 async def fetch_user(token: str | None = None):
+    """Get user details from Twitter/X"""
     if token:
         twitter_client.token = token
     try:
@@ -57,4 +58,4 @@ class ChunkedUpload(object):
         else:
             media_id = req.json()['media_id']
             self.media_id = media_id
-            logger.info(f"Media ID generated: {media_id}")
+            logger.info(f"Media ID: {media_id}")

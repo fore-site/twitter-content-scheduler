@@ -32,6 +32,7 @@ def generate_verifier():
 
 # CREATE JWT ACCESS TOKEN
 def create_access_token(data: dict):
+    """Create a jwt access token."""
     to_encode = data.copy()
     expire = datetime.now(tz=timezone.utc) + timedelta(minutes=30)
     to_encode.update({"sub": str(data["sub"]), "exp": expire, "jti": str(uuid.uuid4()), "type": "access"})
@@ -39,6 +40,7 @@ def create_access_token(data: dict):
     return encoded_access_token
 
 def create_refresh_token(data: dict):
+    """Create a jwt refresh token."""
     to_encode = data.copy()
     expire = datetime.now(tz=timezone.utc) + timedelta(days=1)
     to_encode.update({"sub": str(data["sub"]), "exp": expire, "jti": str(uuid.uuid4()), "type": "refresh"})

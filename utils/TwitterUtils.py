@@ -4,8 +4,15 @@ from utils.AuthUtils import twitter_client
 from utils.common import check_file_type
 import httpx
 import logging
+import time
 
 logger = logging.getLogger()
+
+timeout_exception = HTTPException(status_code=status.HTTP_504_GATEWAY_TIMEOUT,
+                                detail="Oauth service took too long to respond. Please try again.")
+
+bad_gateway_exception = HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, 
+                            detail="Failed to connect to oauth provider.")
 
 async def fetch_user(token: str | None = None):
     """Get user details from Twitter/X"""
@@ -14,13 +21,9 @@ async def fetch_user(token: str | None = None):
     try:
         async_current_user = await twitter_client.get(url="https://api.x.com/2/users/me?user.fields=id,username,name,profile_image_url,verified")
     except httpx.ConnectTimeout:
-        raise HTTPException(
-            status_code=status.HTTP_504_GATEWAY_TIMEOUT,
-            detail="Oauth service took too long to respond. Please try again."
-        )
+        raise timeout_exception
     except httpx.ConnectError:
-        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, 
-                            detail="Failed to connect to oauth provider.")
+        raise bad_gateway_exception
     else:
         current_user = async_current_user.json()
         return current_user
@@ -49,13 +52,9 @@ class ChunkedUpload(object):
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, 
                                 detail=str(e))
         except httpx.ConnectTimeout:
-            raise HTTPException(
-            status_code=status.HTTP_504_GATEWAY_TIMEOUT,
-            detail="Oauth service took too long to respond. Please try again."
-        )
+            raise timeout_exception
         except httpx.ConnectError:
-            raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, 
-                            detail="Failed to connect to oauth provider.")
+            raise bad_gateway_exception
         else:
             media_id = req.json()['media_id']
             self.media_id = media_id
@@ -80,12 +79,9 @@ class ChunkedUpload(object):
             try:
                 req = await twitter_client.post(url=MEDIA_UPLOAD_ENDPOINT, data=request_data, files=files)
             except httpx.ConnectTimeout:
-                raise HTTPException(
-                    status_code=status.HTTP_504_GATEWAY_TIMEOUT,
-                    detail="Oauth service took too long to respond. Please try again.")
+                raise timeout_exception
             except httpx.ConnectError:
-                raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, 
-                            detail="Failed to connect to oauth provider.")
+                raise bad_gateway_exception
             else:
                 if req.status_code < 200 or req.status_code > 299:
                     raise HTTPException(
@@ -93,3 +89,61 @@ class ChunkedUpload(object):
                         detail=req.text
                     )
                 segment_id += 1
+                bytes_sent = self.file.file.tell()
+                logger.info(f"{bytes_sent} of {self.total_bytes} uploaded...")
+        logger.info("Upload chunks complete")
+    
+    async def upload_finalize(self):
+        """Finalizes uploads and starts video processing."""
+        logger.info("Finalize..")
+
+        request_data = {
+            'command': 'FINALIZE',
+            'media_id': self.media_id
+        }
+        try:
+            req = await twitter_client.post(url=MEDIA_UPLOAD_ENDPOINT, data=request_data)
+            self.processing_info = req.json().get("processing_info", None)
+        except httpx.ConnectTimeout:
+            raise timeout_exception
+        except httpx.ConnectError:
+                raise bad_gateway_exception
+        else:
+            await self.check_status()
+    
+    async def check_status(self):
+        """Checks video processing status"""
+        if self.processing_info is None:
+            return
+        state = self.processing_info["state"]
+
+        logger.info(f"Media processing status: {state}")
+        if state == u'succeeded':
+            return
+        elif state == u'failed':
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Media upload failed."
+            )
+        else:
+            check_after = self.processing_info["check_after_secs"]
+            logging.info(f"Checking after {check_after}")
+
+            time.sleep(check_after)
+
+            logging.info("Checking status again...")
+
+            request_params = {
+                'command': 'STATUS',
+                'media_id': self.media_id
+            }
+
+            try:
+                req = await twitter_client.get(url=MEDIA_UPLOAD_ENDPOINT, params=request_params)
+            except httpx.ConnectTimeout:
+                raise timeout_exception
+            except httpx.ConnectError:
+                raise bad_gateway_exception
+            else:
+                self.processing_info = req.json().get('processing_info', None)
+                await self.check_status()

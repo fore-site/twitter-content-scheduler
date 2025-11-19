@@ -21,6 +21,7 @@ twitter_client = AsyncOAuth2Client(client_id=client_id,
 
 # GENERATE CODE VERIFIER AND CODE CHALLENGE FOR PKCE
 def generate_verifier():
+    """Generate and return code verifier and code challenge for PKCE."""
     code_verifier = base64.urlsafe_b64encode(os.urandom(48)).decode()
     code_verifier = re.sub("[^a-zA-Z0-9]+","", code_verifier)
 

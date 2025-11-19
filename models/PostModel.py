@@ -28,8 +28,8 @@ class PostOut(BaseModel):
     """Table Posts. Model for output posts"""
     id: int
     user_id: int
-    text: str
-    media: str | None = None
+    text: str | None = None
+    media: list[str] | list[None]
     scheduled_time: datetime
     created_at: datetime
     post_status: PostStatus

@@ -3,6 +3,7 @@ from fastapi import UploadFile
 from utils.TwitterUtils import ChunkedUpload
 
 async def get_media_id(user_id: int, media: UploadFile) -> dict:
+    """Upload media to X and return media ID valid for 24h"""
     oauth_token = redis_client.get(f"{user_id}:oauth")
     mediaTweet = ChunkedUpload(oauth_token, media)
     await mediaTweet.upload_init()

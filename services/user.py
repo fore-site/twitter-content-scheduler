@@ -12,6 +12,7 @@ from models.TokenModel import Token
 import json
 
 async def create_user_in_db(user) -> tuple:
+    """Logic to create new user in database"""
     async with db.db_pool.connection() as conn:
         async with conn.cursor() as cur:
             await cur.execute("""
@@ -35,6 +36,7 @@ async def create_user_in_db(user) -> tuple:
     return access_token, refresh_token
 
 async def get_access_refresh_token() -> Token:
+    """Logic to get new access and refresh token."""
     current_user = await fetch_user()
     
     # VALIDATE AGAINST PYDANTIC MODEL
@@ -62,6 +64,7 @@ async def get_access_refresh_token() -> Token:
     return Token(access_token=access_token, refresh_token=refresh_token, token_type="bearer")
 
 async def get_current_user(user_id: Annotated[int, Depends(CheckJwt())]):
+    """Logic to get authenticated user."""
     async with db.db_pool.connection() as conn:
         async with conn.cursor(row_factory=dict_row) as cur:
             await cur.execute("""
@@ -79,6 +82,7 @@ async def get_current_user(user_id: Annotated[int, Depends(CheckJwt())]):
     return user
         
 async def get_current_active_user(current_user: Annotated[UserOut, Depends(get_current_user)]):
+    """Logic to get authenticated user with an active status."""
     if current_user.user_status == UserStatus.DEACTIVATED:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, 
                         detail="User does not exist.")
@@ -89,16 +93,19 @@ async def get_current_active_user(current_user: Annotated[UserOut, Depends(get_c
         return current_user       
 
 async def get_new_access_token(user_id: Annotated[int, Depends(CheckJwt(refresh=True))]):
+    """Logic to get new access token."""
     new_access_token = create_access_token({"sub": user_id})
     return Token(access_token=new_access_token, token_type="bearer")
 
 async def revoke_tokens(payload: Annotated[dict, Depends(CheckJwt(verify_type=False, dict_format=True))]):
+    """Logic to revoke both access and refresh tokens"""
     jti = payload.get("jti")
     ttype = payload.get("type")
     await db.redis_client.set(jti, "")
     return {"detail": f"{ttype} token revoked successfully."}
 
 async def update_user(user_id: Annotated[int, Depends(CheckJwt())]):
+    """Logic to update user details from X api."""
     # FETCH OAUTH TOKEN FROM REDIS
     token = await fetch_oauth_from_redis(f"{user_id}:oauth")
 

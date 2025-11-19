@@ -12,6 +12,7 @@ import logging
 logger = logging.getLogger()
 
 async def get_post(post_id: int, user_id: Annotated[int, Depends(CheckJwt())]):
+    """Logic to fetch tweet and media from database"""
     async with db.db_pool:
         async with db.db_pool.connection() as conn:
             async with conn.cursor(row_factory=dict_row) as cur:
@@ -30,6 +31,7 @@ async def get_post(post_id: int, user_id: Annotated[int, Depends(CheckJwt())]):
     return post
 
 async def create_post(user_id: Annotated[int, Depends(CheckJwt())], post_body: BasePost, file: UploadFile | None = None):
+    """Logic to create tweet and attach media."""
     media_list = []
 
     if post_body.text:

@@ -24,11 +24,13 @@ async def update_oauth_token(token, refresh_token = None, access_token = None):
         return
 
 async def fetch_oauth_from_redis(key):
+    """Fetch oauth token from redis database."""
     token = await redis_client.get(key)
     deserialized_token = json.loads(token)
     return deserialized_token
 
 async def check_character_limit(content: str, user_id: int) -> bool:
+    """Check character limit of input text based on user's X premium status"""
     async with db_pool.connection() as conn:
         async with conn.cursor() as cur:
             await cur.execute("""
@@ -49,6 +51,7 @@ async def check_character_limit(content: str, user_id: int) -> bool:
     return
 
 def check_file_type(file: UploadFile, media_category=False) -> str:
+    """Check and return file type or media category from file extension"""
     img_extensions = ["png", "gif", "bmp", "webp", "jpeg", "pjpeg", "tiff"]
     vid_extensions = ["mp4", "webm", "mp2t", "quicktime"]
     type_error = ValueError("Unsupported media type.")

@@ -3,9 +3,8 @@ from pydantic import BaseModel, Field, field_validator, ValidationInfo
 from models.TypeModel import PostStatus
 
 class BasePost(BaseModel):
-    """Table posts. Model for creating and updating posts."""
+    """Table posts. Model for creating posts."""
     text: str | None = None
-    media: str | None = None
     days: int = 0
     hours: int  = 0
     minutes: int = 0
@@ -20,6 +19,10 @@ class BasePost(BaseModel):
 
         scheduled_time = timedelta(days=day, minutes=minute, hours=hour) + datetime.now()
         return scheduled_time
+
+class UpdatePost(BasePost):
+    """Table Posts. Model for updating posts."""
+    media: list[str] | list[None]
 
 class PostOut(BaseModel):
     """Table Posts. Model for output posts"""

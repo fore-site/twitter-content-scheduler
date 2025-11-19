@@ -46,7 +46,7 @@ async def check_character_limit(content: str, user_id: int) -> bool:
         raise ValueError("Maximum character limit for non-premium users is 250")
     elif is_premium and len(content) > 25000:
         raise ValueError("Maximum character count for premium exceeded.")
-    return True
+    return
 
 def check_file_type(file: UploadFile, media_category=False) -> str:
     img_extensions = ["png", "gif", "bmp", "webp", "jpeg", "pjpeg", "tiff"]

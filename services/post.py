@@ -1,11 +1,15 @@
 from config import db
-from fastapi import Depends, HTTPException, status
-from models.PostModel import BasePost, PostOut
+from fastapi import Depends, HTTPException, status, UploadFile
+from models.PostModel import BasePost, PostOut, UpdatePost
 from models.TypeModel import PostStatus
 from psycopg.rows import dict_row
+from services.media import get_media_id
 from typing import Annotated
 from utils.dependencies import CheckJwt
 from utils.common import check_character_limit
+import logging
+
+logger = logging.getLogger()
 
 async def get_post(post_id: int, user_id: Annotated[int, Depends(CheckJwt())]):
     async with db.db_pool:
@@ -25,35 +29,49 @@ async def get_post(post_id: int, user_id: Annotated[int, Depends(CheckJwt())]):
     post = PostOut(**result)
     return post
 
-async def create_post(user_id: Annotated[int, Depends(CheckJwt())], post_body: BasePost):
-    try:
-        check_limit = await check_character_limit(post_body.content, user_id)
-    except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, 
-                          detail=str(e))
-    else:
-        async with db.db_pool.connection() as conn:
-            async with conn.cursor() as cur:
-                await cur.execute("""
+async def create_post(user_id: Annotated[int, Depends(CheckJwt())], post_body: BasePost, file: UploadFile | None = None):
+    media_list = []
+
+    if post_body.text:
+        try:
+            await check_character_limit(post_body.text, user_id)
+        except ValueError as e:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, 
+                          detail=str(e))  
+
+    if file:
+        media_id = await get_media_id(user_id=user_id, media=file)
+        file_bytes = await file.read()
+        logger.info(f"Upload complete, Media ID: {media_id}")
+    
+    async with db.db_pool.connection() as conn:
+        async with conn.cursor() as cur:
+            await cur.execute("""
             INSERT INTO posts (text, media, scheduled_time, user_id)
             VALUES 
             (%s, %s, %s, %s)            
             """, (post_body.text, 
-                post_body.media, 
+                media_list, 
                 post_body.scheduled_time, 
                 user_id))
-        return post_body
+    return post_body
 
-async def update_post(post_id: int, user_id: Annotated[int, Depends(CheckJwt())], post_body: BasePost):
-    try:
-        check_limit = await check_character_limit(post_body.content, user_id)
-    except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, 
+async def update_post(post_id: int, user_id: Annotated[int, Depends(CheckJwt())], post_body: UpdatePost, file: UploadFile | None = None):
+    if post_body.text:
+        try:
+            await check_character_limit(post_body.text, user_id)
+        except ValueError as e:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, 
                           detail=str(e))
-    else:
-        async with db.db_pool.connection() as conn:
-            async with conn.cursor() as cur:
-                await cur.execute("""
+
+    if file:
+        media_id = await get_media_id(user_id=user_id, media=file)
+        file_bytes = await file.read()
+        logger.info(f"Upload complete, Media ID: {media_id}")
+
+    async with db.db_pool.connection() as conn:
+        async with conn.cursor() as cur:
+            await cur.execute("""
             UPDATE posts
             SET text = %(text)s,
                 media = %(media)s,
@@ -68,8 +86,8 @@ async def update_post(post_id: int, user_id: Annotated[int, Depends(CheckJwt())]
           "user_id": user_id,
           "post_id": post_id,
           "post_status": PostStatus.sent})
-                result = await cur.fetchone()
-            if result is None:
-                raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, 
+            result = await cur.fetchone()
+        if result is None:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, 
                                     detail="Cannot update an already sent post.")
     return post_body

@@ -6,7 +6,7 @@ sys.path.append(path.dirname(path.dirname(__file__)))
 
 import asyncio
 import platform
-from config.settings import DB_URI, REDIS_URI
+from config.settings import DB_URI
 import aiofiles
 
 # MAKE ASYNCIO COMPATIBLE WITH PSYCOPG
@@ -15,6 +15,7 @@ if platform.system() == "Windows":
 
 ## CREATE TABLES IN DATABASE 
 async def main():
+    """Initialize the tables and types in the database."""
     pool = AsyncConnectionPool(conninfo=DB_URI, open=False)
     await pool.open()
     async with pool.connection() as conn:

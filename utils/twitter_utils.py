@@ -1,18 +1,13 @@
 from config.settings import MEDIA_UPLOAD_ENDPOINT
 from fastapi import HTTPException, status, UploadFile
-from utils.AuthUtils import twitter_client
+from utils.auth_utils import twitter_client
 from utils.common import check_file_type
+from utils.exceptions import twitter_timeout_exception, twitter_bad_gateway_exception
 import httpx
 import logging
 import time
 
 logger = logging.getLogger()
-
-timeout_exception = HTTPException(status_code=status.HTTP_504_GATEWAY_TIMEOUT,
-                                detail="Oauth service took too long to respond. Please try again.")
-
-bad_gateway_exception = HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, 
-                            detail="Failed to connect to oauth provider.")
 
 async def fetch_user(token: str | None = None):
     """Get user details from Twitter/X"""
@@ -21,9 +16,9 @@ async def fetch_user(token: str | None = None):
     try:
         async_current_user = await twitter_client.get(url="https://api.x.com/2/users/me?user.fields=id,username,name,profile_image_url,verified")
     except httpx.ConnectTimeout:
-        raise timeout_exception
+        raise twitter_timeout_exception
     except httpx.ConnectError:
-        raise bad_gateway_exception
+        raise twitter_bad_gateway_exception
     else:
         current_user = async_current_user.json()
         return current_user
@@ -52,9 +47,9 @@ class ChunkedUpload(object):
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, 
                                 detail=str(e))
         except httpx.ConnectTimeout:
-            raise timeout_exception
+            raise twitter_timeout_exception
         except httpx.ConnectError:
-            raise bad_gateway_exception
+            raise twitter_bad_gateway_exception
         else:
             self.media_id = req.json()['media_id']
             logger.info(f"Media ID: {self.media_id}")
@@ -78,9 +73,9 @@ class ChunkedUpload(object):
             try:
                 req = await twitter_client.post(url=MEDIA_UPLOAD_ENDPOINT, data=request_data, files=files)
             except httpx.ConnectTimeout:
-                raise timeout_exception
+                raise twitter_timeout_exception
             except httpx.ConnectError:
-                raise bad_gateway_exception
+                raise twitter_bad_gateway_exception
             else:
                 if req.status_code < 200 or req.status_code > 299:
                     raise HTTPException(
@@ -103,9 +98,9 @@ class ChunkedUpload(object):
         try:
             req = await twitter_client.post(url=MEDIA_UPLOAD_ENDPOINT, data=request_data)
         except httpx.ConnectTimeout:
-            raise timeout_exception
+            raise twitter_timeout_exception
         except httpx.ConnectError:
-                raise bad_gateway_exception
+                raise twitter_bad_gateway_exception
         else:
             self.processing_info = req.json().get("processing_info", None)
             res = await self.check_status()
@@ -145,9 +140,9 @@ class ChunkedUpload(object):
             try:
                 req = await twitter_client.get(url=MEDIA_UPLOAD_ENDPOINT, params=request_params)
             except httpx.ConnectTimeout:
-                raise timeout_exception
+                raise twitter_timeout_exception
             except httpx.ConnectError:
-                raise bad_gateway_exception
+                raise twitter_bad_gateway_exception
             else:
                 self.processing_info = req.json().get('processing_info', None)
                 res = await self.check_status()

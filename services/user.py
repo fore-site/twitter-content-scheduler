@@ -2,16 +2,18 @@ from config import db
 from fastapi import Depends, HTTPException, status
 from psycopg.rows import dict_row
 from typing import Annotated
-from utils.AuthUtils import twitter_client, create_access_token, create_refresh_token
+from utils.auth_utils import twitter_client, create_access_token, create_refresh_token
 from utils.dependencies import CheckJwt
-from utils.TwitterUtils import fetch_user
+from utils.twitter_utils import fetch_user
 from utils.common import fetch_oauth_from_redis
+from utils.exceptions import redis_connection_exception
 from models.UserModel import BaseUser, UserOut
 from models.TypeModel import UserStatus
 from models.TokenModel import Token
+from redis.exceptions import ConnectionError as RedisConnectionError
 import json
 
-async def create_user_in_db(user) -> tuple:
+async def create_user_in_db(user: BaseUser) -> tuple:
     """Logic to create new user in database"""
     async with db.db_pool.connection() as conn:
         async with conn.cursor() as cur:
@@ -27,8 +29,10 @@ async def create_user_in_db(user) -> tuple:
         
     # SAVE OAUTH TOKEN TO REDIS
     serialized_token = json.dumps(twitter_client.token)
-    await db.redis_client.set(f"{user.id}:oauth", serialized_token)
-
+    try:
+        await db.redis_client.set(f"{user.id}:oauth", serialized_token)
+    except RedisConnectionError:
+        raise redis_connection_exception
     # CREATE AND RETURN JWT ACCESS TOKEN 
     payload = {"sub": user.id}
     access_token = create_access_token(payload)
@@ -48,12 +52,18 @@ async def get_access_refresh_token() -> Token:
     
     # CHECK IF USER ALREADY EXISTS IN DATABASE, ELSE CREATE NEW USER
     payload = {"sub": validated_user.id}
-    user_exists_in_db = await db.redis_client.exists(f"{validated_user.id}:oauth")
+    try:
+        user_exists_in_db = await db.redis_client.exists(f"{validated_user.id}:oauth")
+    except RedisConnectionError:
+        raise redis_connection_exception
     
     if user_exists_in_db:
         # SAVE NEW OAUTH TOKEN TO REDIS
         serialized_token = json.dumps(twitter_client.token)
-        await db.redis_client.set(f"{validated_user.id}:oauth", serialized_token)
+        try:
+            await db.redis_client.set(f"{validated_user.id}:oauth", serialized_token)
+        except RedisConnectionError:
+            raise redis_connection_exception
         
         access_token = create_access_token(payload)
         refresh_token = create_refresh_token(payload)
@@ -101,7 +111,11 @@ async def revoke_tokens(payload: Annotated[dict, Depends(CheckJwt(verify_type=Fa
     """Logic to revoke both access and refresh tokens"""
     jti = payload.get("jti")
     ttype = payload.get("type")
-    await db.redis_client.set(jti, "")
+    try:
+        await db.redis_client.set(jti, "")
+    except RedisConnectionError:
+        raise redis_connection_exception
+    
     return {"detail": f"{ttype} token revoked successfully."}
 
 async def update_user(user_id: Annotated[int, Depends(CheckJwt())]):

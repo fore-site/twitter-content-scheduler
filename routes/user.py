@@ -1,4 +1,4 @@
-from utils import AuthUtils as auth
+from utils import auth_utils as auth
 from authlib.integrations.base_client.errors import OAuthError
 from fastapi import APIRouter, Request, Depends, HTTPException, status
 from fastapi.responses import RedirectResponse

@@ -3,9 +3,11 @@ from config import db
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2AuthorizationCodeBearer
 from jwt.exceptions import InvalidTokenError, ExpiredSignatureError
+from redis.exceptions import ConnectionError as RedisConnectionError
 from starlette_context import context
 from typing import Annotated
-from utils.AuthUtils import auth_url
+from utils.auth_utils import auth_url
+from utils.exceptions import redis_connection_exception
 import jwt
 
 oauth2_scheme = OAuth2AuthorizationCodeBearer(tokenUrl=token_uri, 
@@ -20,10 +22,9 @@ oauth2_scheme = OAuth2AuthorizationCodeBearer(tokenUrl=token_uri,
                                               })
 
 class CheckJwt:
-    """Verify and validate each jwt token. Access or refresh."""
+    """Verify and validate jwt token. Access or refresh."""
     
     def __init__(self, verify_type: bool = True, refresh: bool = False, dict_format: bool = False):
-        """Initialize validation and return type values."""
         self.verify_type = verify_type
         self.refresh = refresh
         self.dict_format = dict_format
@@ -46,8 +47,10 @@ class CheckJwt:
         else:
         # CHECK IF TOKEN EXISTS IN REDIS BLOCKLIST
             jti = payload.get("jti")
-            token_exists_in_redis = await db.redis_client.exists(jti)
-        
+            try:
+                token_exists_in_redis = await db.redis_client.exists(jti)
+            except RedisConnectionError:
+                raise redis_connection_exception
             if token_exists_in_redis:
                 raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, 
                                 detail="JWT token revoked.")

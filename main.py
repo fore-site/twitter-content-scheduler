@@ -1,7 +1,7 @@
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
-from config.db import db_pool
-from routes import user, post, media
+from config.db import db_pool, redis_client
+from routes import user, post
 from starlette_context.middleware import ContextMiddleware
 from starlette_context import plugins
 import logging
@@ -33,4 +33,3 @@ app.add_middleware(
 
 app.include_router(user.router)
 app.include_router(post.router)
-app.include_router(media.router)

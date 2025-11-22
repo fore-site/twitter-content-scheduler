@@ -1,6 +1,8 @@
 from config.db import redis_client, db_pool
 from fastapi import UploadFile
+from redis.exceptions import ConnectionError as RedisConnectionError
 from starlette_context import context
+from utils.exceptions import redis_connection_exception
 import json
 import re
 import logging
@@ -17,15 +19,21 @@ async def update_oauth_token(token, refresh_token = None, access_token = None):
 
         # SERIALIZE THE TOKEN TO AVOID REDIS DATATYPE ERROR
         serialized_token = json.dumps(token)
-
-        await redis_client.set(key, serialized_token)
+        try:
+            await redis_client.set(key, serialized_token)
+        except RedisConnectionError:
+            logger.exception("Failed to save new oauth token. Redis database connection cannot be established.")
     else:
-        logger.error("Unable to save oauth token in redis. No refresh or access token")
+        logger.error("Failed to save oauth token in redis. No refresh or access token")
         return
 
 async def fetch_oauth_from_redis(key):
     """Fetch oauth token from redis database."""
-    token = await redis_client.get(key)
+    try:
+        token = await redis_client.get(key)
+    except RedisConnectionError:
+        raise redis_connection_exception
+    
     deserialized_token = json.loads(token)
     return deserialized_token
 

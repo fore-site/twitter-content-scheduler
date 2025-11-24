@@ -13,6 +13,8 @@ token_uri = str("https://api.x.com/2/oauth2/token")
 authorize_url = str('https://x.com/i/oauth2/authorize')
 scope = "tweet.read tweet.write users.read offline.access media.write"
 MEDIA_UPLOAD_ENDPOINT = str("https://api.x.com/2/media/upload")
+WASABI_SECRET_KEY = os.environ.get("WASABI_SECRET_KEY")
+WASABI_ACCESS_KEY = os.environ.get("WASABI_ACCESS_KEY")
 
 # use "openssl rand -hex 32" to generate secret key
 JWT_SECRET_KEY = os.environ.get("JWT_SECRET_KEY")

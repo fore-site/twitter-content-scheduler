@@ -27,7 +27,7 @@ CREATE TABLE users (
 CREATE TABLE posts (
     id SERIAL PRIMARY KEY,
     text VARCHAR DEFAULT NULL,
-    media VARCHAR DEFAULT NULL,
+    media TEXT[],
     created_at TIMESTAMPTZ DEFAULT NOW(),
     scheduled_time TIMESTAMPTZ,
     post_status postStatus NOT NULL DEFAULT 'pending',

@@ -43,7 +43,6 @@ async def create_post(user_id: Annotated[int, Depends(CheckJwt())], post_body: B
 
     if file:
         media_id = await get_media_id(user_id=user_id, media=file)
-        file_bytes = await file.read()
         logger.info(f"Upload complete, Media ID: {media_id}")
     
     async with db.db_pool.connection() as conn:

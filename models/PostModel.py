@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 from pydantic import BaseModel, Field, field_validator, ValidationInfo
 from models.TypeModel import PostStatus
+from typing import List
 
 class BasePost(BaseModel):
     """Table posts. Model for creating posts."""
@@ -22,7 +23,7 @@ class BasePost(BaseModel):
 
 class UpdatePost(BasePost):
     """Table Posts. Model for updating posts."""
-    media: list[str] | list[None]
+    media: List[str] = Field(default=list())
 
 class PostOut(BaseModel):
     """Table Posts. Model for output posts"""

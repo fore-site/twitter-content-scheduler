@@ -76,9 +76,17 @@ async def update_post(post_id: int, user_id: Annotated[int, Depends(CheckJwt())]
                           detail=str(e))
 
     if file:
+        s3 = WasabiClient()
         media_id = await get_media_id(user_id=user_id, media=file)
-        file_bytes = await file.read()
         logger.info(f"Upload complete, Media ID: {media_id}")
+
+        # GENERATE URL FOR UPLOAD AND UPLOAD FILE TO WASABI STORAGE
+        put_url = await s3.generate_presigned_url(key=file.filename)
+        await upload_to_wasabi(url=put_url, file=file)
+        
+        # GENERATE URL FOR DOWNLOAD/READING FILE FROM WASABI AND APPEND TO LIST
+        get_url = await s3.generate_presigned_url(key=file.filename, method='get')
+        post_body.media.append(get_url)
 
     async with db.db_pool.connection() as conn:
         async with conn.cursor() as cur:

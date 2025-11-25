@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from fastapi import UploadFile
 from pydantic import BaseModel, Field, field_validator, ValidationInfo
 from models.TypeModel import PostStatus
 from typing import List
@@ -9,6 +10,7 @@ class BasePost(BaseModel):
     days: int = 0
     hours: int  = 0
     minutes: int = 0
+    files: List[UploadFile] | None = None
     scheduled_time: datetime = Field(datetime.now(), validate_default=True)
     
     @field_validator("scheduled_time", mode="before")

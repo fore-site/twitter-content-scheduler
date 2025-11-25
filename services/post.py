@@ -1,6 +1,6 @@
 from config import db
 from config.wasabi import WasabiClient
-from fastapi import Depends, HTTPException, status, UploadFile
+from fastapi import Depends, Form, HTTPException, status, UploadFile
 from models.PostModel import BasePost, PostOut, UpdatePost
 from models.TypeModel import PostStatus
 from psycopg.rows import dict_row
@@ -31,7 +31,7 @@ async def get_post(post_id: int, user_id: Annotated[int, Depends(CheckJwt())]):
     post = PostOut(**result)
     return post
 
-async def create_post(user_id: Annotated[int, Depends(CheckJwt())], post_body: BasePost, file: UploadFile | None = None):
+async def create_post(user_id: Annotated[int, Depends(CheckJwt())], post_body: Annotated[BasePost, Form(media_type="multipart/form-data")]):
     """Logic to create tweet and attach media."""
     media_list = []
 
@@ -42,18 +42,21 @@ async def create_post(user_id: Annotated[int, Depends(CheckJwt())], post_body: B
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, 
                           detail=str(e))  
 
-    if file:
+    if post_body.files:
+        media_id_list = []
         s3 = WasabiClient()
-        media_id = await get_media_id(user_id=user_id, media=file)
-        logger.info(f"Upload to Twitter/X complete, Media ID: {media_id}")
+        for file in post_body.files:
+            media_id = await get_media_id(user_id=user_id, media=file)
+            logger.info(f"Upload to Twitter/X complete, Media ID: {media_id}")
+            media_id_list.append(media_id)
 
         # GENERATE URL FOR UPLOAD AND UPLOAD FILE TO WASABI STORAGE
-        put_url = await s3.generate_presigned_url(key=file.filename)
-        await upload_to_wasabi(url=put_url, file=file)
+            put_url = await s3.generate_presigned_url(key=file.filename)
+            await upload_to_wasabi(url=put_url, file=file)
         
         # GENERATE URL FOR DOWNLOAD/READING FILE FROM WASABI AND APPEND TO LIST
-        get_url = await s3.generate_presigned_url(key=file.filename, method='get')
-        media_list.append(get_url)
+            get_url = await s3.generate_presigned_url(key=file.filename, method='get')
+            media_list.append(get_url)
     
     async with db.db_pool.connection() as conn:
         async with conn.cursor() as cur:
@@ -65,9 +68,10 @@ async def create_post(user_id: Annotated[int, Depends(CheckJwt())], post_body: B
                 media_list, 
                 post_body.scheduled_time, 
                 user_id))
+    delattr(post_body, 'file')
     return post_body
 
-async def update_post(post_id: int, user_id: Annotated[int, Depends(CheckJwt())], post_body: UpdatePost, file: UploadFile | None = None):
+async def update_post(post_id: int, user_id: Annotated[int, Depends(CheckJwt())], post_body: Annotated[UpdatePost, Form(media_type="multipart/form-data")]):
     if post_body.text:
         try:
             await check_character_limit(post_body.text, user_id)
@@ -75,18 +79,21 @@ async def update_post(post_id: int, user_id: Annotated[int, Depends(CheckJwt())]
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, 
                           detail=str(e))
 
-    if file:
+    if post_body.files:
+        media_id_list = []
         s3 = WasabiClient()
-        media_id = await get_media_id(user_id=user_id, media=file)
-        logger.info(f"Upload complete, Media ID: {media_id}")
+        for file in post_body.files:
+            media_id = await get_media_id(user_id=user_id, media=file)
+            logger.info(f"Upload complete, Media ID: {media_id}")
+            media_id_list.append(media_id)
 
         # GENERATE URL FOR UPLOAD AND UPLOAD FILE TO WASABI STORAGE
-        put_url = await s3.generate_presigned_url(key=file.filename)
-        await upload_to_wasabi(url=put_url, file=file)
+            put_url = await s3.generate_presigned_url(key=file.filename)
+            await upload_to_wasabi(url=put_url, file=file)
         
         # GENERATE URL FOR DOWNLOAD/READING FILE FROM WASABI AND APPEND TO LIST
-        get_url = await s3.generate_presigned_url(key=file.filename, method='get')
-        post_body.media.append(get_url)
+            get_url = await s3.generate_presigned_url(key=file.filename, method='get')
+            post_body.media.append(get_url)
 
     async with db.db_pool.connection() as conn:
         async with conn.cursor() as cur:

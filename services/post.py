@@ -1,9 +1,10 @@
 from config import db
+from config.wasabi import WasabiClient
 from fastapi import Depends, HTTPException, status, UploadFile
 from models.PostModel import BasePost, PostOut, UpdatePost
 from models.TypeModel import PostStatus
 from psycopg.rows import dict_row
-from services.media import get_media_id
+from services.media import get_media_id, upload_to_wasabi
 from typing import Annotated
 from utils.dependencies import CheckJwt
 from utils.common import check_character_limit
@@ -42,8 +43,17 @@ async def create_post(user_id: Annotated[int, Depends(CheckJwt())], post_body: B
                           detail=str(e))  
 
     if file:
+        s3 = WasabiClient()
         media_id = await get_media_id(user_id=user_id, media=file)
-        logger.info(f"Upload complete, Media ID: {media_id}")
+        logger.info(f"Upload to Twitter/X complete, Media ID: {media_id}")
+
+        # GENERATE URL FOR UPLOAD AND UPLOAD FILE TO WASABI STORAGE
+        put_url = await s3.generate_presigned_url(key=file.filename)
+        await upload_to_wasabi(url=put_url, file=file)
+        
+        # GENERATE URL FOR DOWNLOAD/READING FILE FROM WASABI AND APPEND TO LIST
+        get_url = await s3.generate_presigned_url(key=file.filename, method='get')
+        media_list.append(get_url)
     
     async with db.db_pool.connection() as conn:
         async with conn.cursor() as cur:

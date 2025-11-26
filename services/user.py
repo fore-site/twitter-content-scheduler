@@ -12,6 +12,9 @@ from models.TypeModel import UserStatus
 from models.TokenModel import Token
 from redis.exceptions import ConnectionError as RedisConnectionError
 import json
+import logging
+
+logger = logging.getLogger()
 
 async def create_user_in_db(user: BaseUser) -> tuple:
     """Logic to create new user in database"""
@@ -60,6 +63,7 @@ async def get_access_refresh_token() -> Token:
     if user_exists_in_db:
         # SAVE NEW OAUTH TOKEN TO REDIS
         serialized_token = json.dumps(twitter_client.token)
+
         try:
             await db.redis_client.set(f"{validated_user.id}:oauth", serialized_token)
         except RedisConnectionError:

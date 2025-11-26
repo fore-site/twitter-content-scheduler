@@ -3,6 +3,7 @@ from fastapi import UploadFile, HTTPException
 from redis.exceptions import ConnectionError as RedisConnectionError
 from utils.twitter_utils import ChunkedUpload
 from utils.exceptions import redis_connection_exception
+from utils.common import fetch_oauth_from_redis
 import logging
 import requests
 
@@ -11,7 +12,7 @@ logger = logging.getLogger()
 async def get_media_id(user_id: int, media: UploadFile) -> dict:
     """Upload media to X and return media ID valid for 24h"""
     try:
-        oauth_token = redis_client.get(f"{user_id}:oauth")
+        oauth_token = await fetch_oauth_from_redis(f"{user_id}:oauth")
     except RedisConnectionError:
         raise redis_connection_exception
     

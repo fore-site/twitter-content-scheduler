@@ -31,10 +31,11 @@ async def fetch_oauth_from_redis(key):
     """Fetch oauth token from redis database."""
     try:
         token = await redis_client.get(key)
+        token = token.decode('utf-8')
     except RedisConnectionError:
         raise redis_connection_exception
-    
-    deserialized_token = json.loads(token)
+    else:
+        deserialized_token = json.loads(token)
     return deserialized_token
 
 async def check_character_limit(content: str, user_id: int) -> bool:

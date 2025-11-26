@@ -9,7 +9,7 @@ import time
 
 logger = logging.getLogger()
 
-async def fetch_user(token: str | None = None):
+async def fetch_user(token = None):
     """Get user details from Twitter/X"""
     if token:
         twitter_client.token = token
@@ -25,12 +25,13 @@ async def fetch_user(token: str | None = None):
     
 class ChunkedUpload(object):
 
-    def __init__(self, token: str, file: UploadFile):
+    def __init__(self, token, file: UploadFile):
         """Defines media tweet properties """
         self.file = file
         self.total_bytes = file.size
         self.media_id = None
         self.processing_info = None
+        self.header = {'Content-Type': 'multipart/form-data'}
         twitter_client.token = token
 
     async def upload_init(self):
@@ -42,7 +43,7 @@ class ChunkedUpload(object):
                 "total_bytes": self.total_bytes,
                 "media_category": check_file_type(self.file, media_category=True)
             }
-            req = await twitter_client.post(url=MEDIA_UPLOAD_ENDPOINT, data=request_data)
+            req = await twitter_client.post(url=MEDIA_UPLOAD_ENDPOINT, data=request_data, headers=self.header)
         except ValueError as e:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, 
                                 detail=str(e))
@@ -51,6 +52,7 @@ class ChunkedUpload(object):
         except httpx.ConnectError:
             raise twitter_bad_gateway_exception
         else:
+            logger.info(f"Request res: {req.json()}")
             self.media_id = req.json()['media_id']
             logger.info(f"Media ID: {self.media_id}")
             
@@ -71,7 +73,7 @@ class ChunkedUpload(object):
                 'media': chunk
             }
             try:
-                req = await twitter_client.post(url=MEDIA_UPLOAD_ENDPOINT, data=request_data, files=files)
+                req = await twitter_client.post(url=MEDIA_UPLOAD_ENDPOINT, data=request_data, files=files, headers=self.header)
             except httpx.ConnectTimeout:
                 raise twitter_timeout_exception
             except httpx.ConnectError:
@@ -96,7 +98,7 @@ class ChunkedUpload(object):
             'media_id': self.media_id
         }
         try:
-            req = await twitter_client.post(url=MEDIA_UPLOAD_ENDPOINT, data=request_data)
+            req = await twitter_client.post(url=MEDIA_UPLOAD_ENDPOINT, data=request_data, headers=self.header)
         except httpx.ConnectTimeout:
             raise twitter_timeout_exception
         except httpx.ConnectError:

@@ -13,7 +13,6 @@ router = APIRouter()
 @router.get("/login")
 async def login_user():
     res = RedirectResponse(auth.auth_url)
-    # res.set_cookie(key="oauth_state", value=auth.state, httponly=True)
     return res
 
 @router.get("/", response_model=Token)
@@ -30,7 +29,6 @@ async def callback_home(request: Request):
     except OAuthError as e:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, 
                             detail=str(e))
-    # response.delete_cookie(key="oauth_state")
     access_refresh_token = await get_access_refresh_token()
     return access_refresh_token     
 

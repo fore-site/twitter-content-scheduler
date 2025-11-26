@@ -1,6 +1,6 @@
 from config import db
 from config.wasabi import WasabiClient
-from fastapi import Depends, Form, HTTPException, status, UploadFile
+from fastapi import Depends, Form, HTTPException, status
 from models.PostModel import BasePost, PostOut, UpdatePost
 from models.TypeModel import PostStatus
 from psycopg.rows import dict_row
@@ -68,7 +68,7 @@ async def create_post(user_id: Annotated[int, Depends(CheckJwt())], post_body: A
                 media_list, 
                 post_body.scheduled_time, 
                 user_id))
-    delattr(post_body, 'file')
+    delattr(post_body, 'files')
     return post_body
 
 async def update_post(post_id: int, user_id: Annotated[int, Depends(CheckJwt())], post_body: Annotated[UpdatePost, Form(media_type="multipart/form-data")]):
@@ -116,4 +116,5 @@ async def update_post(post_id: int, user_id: Annotated[int, Depends(CheckJwt())]
         if result is None:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, 
                                     detail="Cannot update an already sent post.")
+    delattr(post_body, 'files')
     return post_body

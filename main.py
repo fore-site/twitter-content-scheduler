@@ -1,6 +1,6 @@
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
-from config.db import db_pool, redis_client
+from config.db import db_pool
 from routes import user, post
 from starlette_context.middleware import ContextMiddleware
 from starlette_context import plugins

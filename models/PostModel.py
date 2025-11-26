@@ -32,7 +32,7 @@ class PostOut(BaseModel):
     id: int
     user_id: int
     text: str | None = None
-    media: list[str] | list[None]
+    media: List[str]
     scheduled_time: datetime
     created_at: datetime
     post_status: PostStatus

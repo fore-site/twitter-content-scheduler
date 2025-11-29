@@ -21,6 +21,8 @@ async def update_oauth_token(token, refresh_token = None, access_token = None):
         serialized_token = json.dumps(token)
         try:
             await redis_client.set(key, serialized_token)
+            logger.info(f"New oauth token saved to redis")
+            logger.info(serialized_token)
         except RedisConnectionError:
             logger.exception("Failed to save new oauth token. Redis database connection cannot be established.")
     else:
@@ -70,11 +72,11 @@ def check_file_type(file: UploadFile, media_category=False) -> str:
 
     if media_category:
         if match[1:] == "gif":
-            return "gif"
+            return "tweet_gif"
         elif match[1:] in img_extensions:
-            return "image"
+            return "tweet_image"
         elif match[1:] in vid_extensions:
-            return "video"
+            return "tweet_video"
         else: 
             raise type_error
 

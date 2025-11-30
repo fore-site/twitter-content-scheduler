@@ -43,7 +43,7 @@ def create_access_token(data: dict):
 def create_refresh_token(data: dict):
     """Create a jwt refresh token."""
     to_encode = data.copy()
-    expire = datetime.now(tz=timezone.utc) + timedelta(days=1)
+    expire = datetime.now(tz=timezone.utc) + timedelta(days=7)
     to_encode.update({"sub": str(data["sub"]), "exp": expire, "jti": str(uuid.uuid4()), "type": "refresh"})
     encoded_refresh_token = jwt.encode(to_encode, JWT_SECRET_KEY, algorithm=ALGORITHM)
     return encoded_refresh_token

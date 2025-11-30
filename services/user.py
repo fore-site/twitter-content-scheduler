@@ -116,7 +116,8 @@ async def revoke_tokens(payload: Annotated[dict, Depends(CheckJwt(verify_type=Fa
     jti = payload.get("jti")
     ttype = payload.get("type")
     try:
-        await db.redis_client.set(jti, "")
+        # ADD TOKEN TO BLOCKLIST, SET TO EXPIRE IN 7 DAYS, EXACT TIME ITS REFRESH TOKEN EXPIRES
+        await db.redis_client.set(jti, "", ex=604800)
     except RedisConnectionError:
         raise redis_connection_exception
     

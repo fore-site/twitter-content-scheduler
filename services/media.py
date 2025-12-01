@@ -9,7 +9,7 @@ import requests
 
 logger = logging.getLogger()
 
-async def get_media_id(user_id: int, media: UploadFile) -> dict:
+async def get_media_id(user_id: int, media: UploadFile):
     """Upload media to X and return media ID valid for 24h"""
     try:
         oauth_token = await fetch_oauth_from_redis(f"{user_id}:oauth")

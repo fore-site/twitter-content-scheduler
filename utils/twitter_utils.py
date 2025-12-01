@@ -1,5 +1,8 @@
 from config.settings import MEDIA_UPLOAD_ENDPOINT
+from config.db import db_pool
 from fastapi import HTTPException, status, UploadFile
+from models.PostModel import BasePost, UpdatePost
+from models.TypeModel import PostStatus
 from utils.auth_utils import twitter_client
 from utils.common import check_file_type
 from utils.exceptions import twitter_timeout_exception, twitter_bad_gateway_exception
@@ -56,7 +59,6 @@ class ChunkedUpload(object):
         else:
             file_logger.info(f"Request res: {req.json()}")
             self.media_id = req.json()['data']['id']
-            logger.info(f"Media ID: {self.media_id}")
             
     async def upload_append(self):
         """Uploads media in chunks and appends to chunks"""
@@ -67,7 +69,6 @@ class ChunkedUpload(object):
             chunk = await self.file.read(4*1024*1024)
             logger.info("Append..")
             request_data = {
-                'media_id': self.media_id,
                 'segment_index': segment_id
             }
             files = {
@@ -98,12 +99,9 @@ class ChunkedUpload(object):
         """Finalizes uploads and starts video processing."""
         logger.info("Finalize..")
 
-        request_data = {
-            'command': 'FINALIZE',
-            'media_id': self.media_id
-        }
         try:
-            req = await twitter_client.post(url=MEDIA_UPLOAD_ENDPOINT, data=request_data, headers=self.header)
+            req = await twitter_client.post(
+                url=f"{MEDIA_UPLOAD_ENDPOINT}/{self.media_id}/finalize")
         except httpx.ConnectTimeout:
             raise twitter_timeout_exception
         except httpx.ConnectError:
@@ -157,3 +155,32 @@ class ChunkedUpload(object):
                     return req.json()
                 else:
                     return res
+                
+async def send_scheduled_tweet(post_id: int, user_id: int, media_ids: list, token: dict, tweet_body: BasePost | UpdatePost):
+    twitter_client.token = token
+
+    request_data = {
+        "media": {
+            "media_ids": media_ids
+        },
+        "text": tweet_body.text
+    }
+    try:
+        req = await twitter_client.post(
+            url="https://api.x.com/2/tweets",
+            headers={"Content-Type": "application/json"},
+            json=request_data
+        )
+    except httpx.ConnectTimeout:
+        raise twitter_timeout_exception
+    except httpx.ConnectError:
+        raise twitter_bad_gateway_exception
+    else:
+        if req.status_code < 200 or req.status_code > 299:
+            file_logger.exception(req.json())
+            raise HTTPException(
+                status_code=req.status_code,
+                detail=req.text
+            )
+        file_logger.info(f"Scheduled post successfully sent: {req.json()}")
+        return

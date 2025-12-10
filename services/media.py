@@ -21,6 +21,7 @@ async def get_media_id(user_id: int, media: UploadFile):
     await mediaTweet.upload_init()
     await mediaTweet.upload_append()
     media_id_response = await mediaTweet.upload_finalize()
+    print(media_id_response)
 
     return media_id_response["data"].get("id")
 

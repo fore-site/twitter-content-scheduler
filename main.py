@@ -2,6 +2,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from config.db import db_pool
 from routes import user, post
+from scheduler.settings import scheduler
 from starlette_context.middleware import ContextMiddleware
 from starlette_context import plugins
 import logging
@@ -16,6 +17,10 @@ async def lifespan(instance: FastAPI):
     logger.info("Starting FastAPI server...")
 
     await db_pool.open()
+    logger.info("Database connection pool opened...")
+
+    scheduler.start()
+    logger.info("Scheduler instance started...")
 
     yield
 

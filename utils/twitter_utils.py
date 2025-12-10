@@ -62,6 +62,7 @@ class ChunkedUpload(object):
             
     async def upload_append(self):
         """Uploads media in chunks and appends to chunks"""
+        print(f"MEDIA ID: {self.media_id}")
         segment_id = 0
         bytes_sent = 0
 
@@ -69,23 +70,21 @@ class ChunkedUpload(object):
             chunk = await self.file.read(4*1024*1024)
             logger.info("Append..")
             request_data = {
-                'segment_index': segment_id
-            }
-            files = {
+                'segment_index': segment_id,
                 'media': chunk
             }
             try:
                 req = await twitter_client.post(
                     url=f"{MEDIA_UPLOAD_ENDPOINT}/{self.media_id}/append", 
-                    data=request_data, 
-                    files=files, 
-                    headers={"Content-Type": "multipart/form-data"})
+                    json=request_data,
+                    headers={"Content-Type": "application/json"})
             except httpx.ConnectTimeout:
                 raise twitter_timeout_exception
             except httpx.ConnectError:
                 raise twitter_bad_gateway_exception
             else:
                 if req.status_code < 200 or req.status_code > 299:
+                    file_logger.info(req.json())
                     raise HTTPException(
                         status_code=req.status_code,
                         detail=req.text
@@ -107,6 +106,11 @@ class ChunkedUpload(object):
         except httpx.ConnectError:
                 raise twitter_bad_gateway_exception
         else:
+            if req.status_code < 200 or req.status_code > 299:
+                raise HTTPException(
+                    status_code=req.status_code,
+                    detail=req.text
+                )
             self.processing_info = req.json().get("processing_info", None)
             res = await self.check_status()
             if res is None:
@@ -156,15 +160,16 @@ class ChunkedUpload(object):
                 else:
                     return res
                 
-async def send_scheduled_tweet(post_id: int, user_id: int, media_ids: list, token: dict, tweet_body: BasePost | UpdatePost):
+async def send_scheduled_tweet(post_id: int, user_id: int, token: dict, tweet_body: BasePost | UpdatePost, media_ids: list | None = None):
     twitter_client.token = token
 
     request_data = {
-        "media": {
-            "media_ids": media_ids
-        },
         "text": tweet_body.text
     }
+    
+    if media_ids:
+        request_data.update({"media": {"media_ids": media_ids}})
+    
     try:
         req = await twitter_client.post(
             url="https://api.x.com/2/tweets",

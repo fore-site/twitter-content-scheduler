@@ -30,10 +30,9 @@ async def update_oauth_token(token, refresh_token = None, access_token = None):
         return
 
 async def fetch_oauth_from_redis(key):
-    """Fetch oauth token from redis database."""
+    """Fetch oauth token from redis database. Fully provide the key as arg."""
     try:
         token = await redis_client.get(key)
-        token = token.decode('utf-8')
     except RedisConnectionError:
         raise redis_connection_exception
     else:

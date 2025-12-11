@@ -12,4 +12,4 @@ db_pool = AsyncConnectionPool(conninfo=DB_URI, open=False)
 
 import redis.asyncio as aioredis
 
-redis_client = aioredis.from_url(REDIS_URI)
+redis_client = aioredis.from_url(REDIS_URI, decode_response=True)

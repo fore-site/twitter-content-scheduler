@@ -4,13 +4,16 @@ from fastapi import Depends, Form, HTTPException, status
 from models.PostModel import BasePost, PostOut, UpdatePost
 from models.TypeModel import PostStatus
 from psycopg.rows import dict_row
+from redis.exceptions import ConnectionError as RedisConnectionError
 from services.media import get_media_id, upload_to_wasabi
 from scheduler.settings import scheduler
 from typing import Annotated
 from utils.dependencies import CheckJwt
+from utils.exceptions import redis_connection_exception
 from utils.common import check_character_limit, fetch_oauth_from_redis
 from utils.twitter_utils import send_scheduled_tweet
 import logging
+import uuid
 
 logger = logging.getLogger()
 
@@ -60,6 +63,7 @@ async def create_post(user_id: Annotated[int, Depends(CheckJwt())], post_body: A
             get_url = await s3.generate_presigned_url(key=file.filename, method='get')
             media_list.append(get_url)
 
+    # ADD TWEET TO DATABASE
     async with db.db_pool.connection() as conn:
         async with conn.cursor() as cur:
             await cur.execute("""
@@ -76,13 +80,21 @@ async def create_post(user_id: Annotated[int, Depends(CheckJwt())], post_body: A
     delattr(post_body, 'files')
 
     # ADD JOB TO SCHEDULER
-    token = fetch_oauth_from_redis(f"{user_id}:oauth")
+    job_id = str(uuid.uuid4())
+    token = await fetch_oauth_from_redis(f"{user_id}:oauth")
     job = scheduler.add_job(send_scheduled_tweet,
                             'date',
                             run_date=post_body.scheduled_time,
-                            args=[post_id, user_id, token, post_body])
-
-    return post_body
+                            args=[post_id, user_id, token, post_body],
+                            id=job_id)
+    
+    # SAVE JOB ID TO REDIS FOR FUTURE MODIFICATION
+    try:
+        await db.redis_client.set(f'{post_id}:job_id', job_id)
+    except RedisConnectionError:
+        return redis_connection_exception
+    else:
+        return post_body
 
 async def update_post(post_id: int, user_id: Annotated[int, Depends(CheckJwt())], post_body: Annotated[UpdatePost, Form(media_type="multipart/form-data")]):
     if post_body.text:
@@ -130,4 +142,7 @@ async def update_post(post_id: int, user_id: Annotated[int, Depends(CheckJwt())]
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, 
                                     detail="Cannot update an already sent post.")
     delattr(post_body, 'files')
+
+    # MODIFY JOB IN SCHEDULER
+    
     return post_body

@@ -144,5 +144,13 @@ async def update_post(post_id: int, user_id: Annotated[int, Depends(CheckJwt())]
     delattr(post_body, 'files')
 
     # MODIFY JOB IN SCHEDULER
+    job_id = await db.redis_client.get(f"{post_id}:job_id")
+    token = await fetch_oauth_from_redis(f"{user_id}:oauth")
+    scheduler.modify_job(job_id=job_id, 
+                        jobstore='postgres', 
+                        func=send_scheduled_tweet,
+                        trigger='date',
+                        run_date=post_body.scheduled_time,
+                        args=[post_id, user_id, token, post_body])
     
     return post_body

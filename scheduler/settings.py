@@ -13,8 +13,7 @@ executors = {
 }
 
 job_defaults = {
-    'coalesce': False,
-    'max_instances': 3
+    'coalesce': True,
 }
 
 scheduler = AsyncIOScheduler(jobstores=job_stores, executors=executors, job_defaults=job_defaults, timezone=utc)

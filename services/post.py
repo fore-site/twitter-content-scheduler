@@ -5,9 +5,11 @@ from models.PostModel import BasePost, PostOut, UpdatePost
 from models.TypeModel import PostStatus
 from psycopg.rows import dict_row
 from services.media import get_media_id, upload_to_wasabi
+from scheduler.settings import scheduler
 from typing import Annotated
 from utils.dependencies import CheckJwt
-from utils.common import check_character_limit
+from utils.common import check_character_limit, fetch_oauth_from_redis
+from utils.twitter_utils import send_scheduled_tweet
 import logging
 
 logger = logging.getLogger()
@@ -57,18 +59,29 @@ async def create_post(user_id: Annotated[int, Depends(CheckJwt())], post_body: A
         # GENERATE URL FOR DOWNLOAD/READING FILE FROM WASABI AND APPEND TO LIST
             get_url = await s3.generate_presigned_url(key=file.filename, method='get')
             media_list.append(get_url)
-    
+
     async with db.db_pool.connection() as conn:
         async with conn.cursor() as cur:
             await cur.execute("""
             INSERT INTO posts (text, media, scheduled_time, user_id)
             VALUES 
-            (%s, %s, %s, %s)            
+            (%s, %s, %s, %s)
+            RETURNING id          
             """, (post_body.text, 
                 media_list, 
                 post_body.scheduled_time, 
                 user_id))
+            result = await cur.fetchone()
+            post_id = result[0]
     delattr(post_body, 'files')
+
+    # ADD JOB TO SCHEDULER
+    token = fetch_oauth_from_redis(f"{user_id}:oauth")
+    job = scheduler.add_job(send_scheduled_tweet,
+                            'date',
+                            run_date=post_body.scheduled_time,
+                            args=[post_id, user_id, token, post_body])
+
     return post_body
 
 async def update_post(post_id: int, user_id: Annotated[int, Depends(CheckJwt())], post_body: Annotated[UpdatePost, Form(media_type="multipart/form-data")]):

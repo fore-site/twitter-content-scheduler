@@ -26,6 +26,7 @@ async def lifespan(instance: FastAPI):
 
     logger.info("Shutting down FastAPI server...")
     await db_pool.close()
+    scheduler.shutdown()
 
 app = FastAPI(lifespan=lifespan)
 app.add_middleware(

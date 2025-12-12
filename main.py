@@ -22,7 +22,6 @@ async def lifespan(instance: FastAPI):
     logger.info("Database connection pool opened...")
 
     scheduler.start()
-    logger.info("Scheduler instance started...")
 
     scheduler.add_listener(event_listener, EVENT_JOB_EXECUTED | EVENT_JOB_ERROR)
 
@@ -41,5 +40,5 @@ app.add_middleware(
     )
 )
 
-app.include_router(user.router)
-app.include_router(post.router)
+app.include_router(user.router, prefix="/v1")
+app.include_router(post.router, prefix="/v1")

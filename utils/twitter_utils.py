@@ -1,5 +1,5 @@
 from config.settings import MEDIA_UPLOAD_ENDPOINT
-from config.db import db_pool
+from config.db import db_pool, redis_client
 from fastapi import HTTPException, status, UploadFile
 from models.PostModel import BasePost, UpdatePost
 from models.TypeModel import PostStatus
@@ -188,4 +188,5 @@ async def send_scheduled_tweet(post_id: int, user_id: int, token: dict, tweet_bo
                 detail=req.text
             )
         file_logger.info(f"Scheduled post successfully sent: {req.json()}")
+        await redis_client.delete(f"{post_id}:job_id")
         return

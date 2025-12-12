@@ -1,8 +1,10 @@
+from apscheduler.events import EVENT_JOB_ERROR
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from config.db import db_pool
 from routes import user, post
 from scheduler.settings import scheduler
+from scheduler.listener import event_listener
 from starlette_context.middleware import ContextMiddleware
 from starlette_context import plugins
 import logging
@@ -21,6 +23,8 @@ async def lifespan(instance: FastAPI):
 
     scheduler.start()
     logger.info("Scheduler instance started...")
+
+    scheduler.add_listener(event_listener, EVENT_JOB_ERROR)
 
     yield
 

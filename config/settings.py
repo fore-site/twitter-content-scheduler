@@ -4,6 +4,7 @@ import os
 load_dotenv(find_dotenv())
 
 DB_URI = os.environ.get("DB_CONNECTION_STRING")
+SQLALCHEMY_URI = os.environ.get("SQLALCHEMY_DB_CONNECTION_STRING")
 REDIS_URI = os.environ.get("REDIS_URI")
 os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
 client_id = os.environ.get("CLIENT_ID")

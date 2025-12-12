@@ -1,6 +1,6 @@
 from config.settings import MEDIA_UPLOAD_ENDPOINT
 from config.db import db_pool, redis_client
-from db_utils import update_post_status_in_db
+from utils.db_utils import update_post_status_in_db
 from fastapi import HTTPException, status, UploadFile
 from models.PostModel import BasePost, UpdatePost
 from utils.auth_utils import twitter_client

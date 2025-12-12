@@ -1,11 +1,11 @@
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
 from apscheduler.executors.pool import ThreadPoolExecutor
-from config.db import DB_URI
+from config.settings import SQLALCHEMY_URI 
 from datetime import timezone
 
 job_stores = {
-    'postgres': SQLAlchemyJobStore(url=DB_URI)
+    'postgres': SQLAlchemyJobStore(url=SQLALCHEMY_URI)
 }
 
 executors = {

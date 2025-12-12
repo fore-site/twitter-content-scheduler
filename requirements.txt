@@ -11,3 +11,5 @@ pyjwt
 pytest
 python-multipart
 boto3
+sqlalchemy
+apscheduler

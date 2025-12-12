@@ -2,7 +2,6 @@ from config import db
 from config.wasabi import WasabiClient
 from fastapi import Depends, Form, HTTPException, status
 from models.PostModel import BasePost, PostOut, UpdatePost
-from models.TypeModel import PostStatus
 from psycopg.rows import dict_row
 from redis.exceptions import ConnectionError as RedisConnectionError
 from services.media import get_media_id, upload_to_wasabi
@@ -129,14 +128,13 @@ async def update_post(post_id: int, user_id: Annotated[int, Depends(CheckJwt())]
                 scheduled_time = %(scheduled_time)s
             WHERE posts.user_id = %(user_id)s AND
                     posts.id = %(post_id)s AND
-                    posts.post_status <> %(post_status)s
+                    posts.post_status <> 'sent'
             RETURNING id
     """, {"text": post_body.text, 
           "media": post_body.media, 
           "scheduled_time": post_body.scheduled_time,
           "user_id": user_id,
-          "post_id": post_id,
-          "post_status": PostStatus.sent})
+          "post_id": post_id})
             result = await cur.fetchone()
         if result is None:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, 

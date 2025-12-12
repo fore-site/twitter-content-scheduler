@@ -1,8 +1,8 @@
 from config.settings import MEDIA_UPLOAD_ENDPOINT
 from config.db import db_pool, redis_client
+from db_utils import update_post_status_in_db
 from fastapi import HTTPException, status, UploadFile
 from models.PostModel import BasePost, UpdatePost
-from models.TypeModel import PostStatus
 from utils.auth_utils import twitter_client
 from utils.common import check_file_type
 from utils.exceptions import twitter_timeout_exception, twitter_bad_gateway_exception
@@ -177,15 +177,19 @@ async def send_scheduled_tweet(post_id: int, user_id: int, token: dict, tweet_bo
             json=request_data
         )
     except httpx.ConnectTimeout:
+        await update_post_status_in_db(db_pool, post_id, 'failed')
         raise twitter_timeout_exception
     except httpx.ConnectError:
+        await update_post_status_in_db(db_pool, post_id, 'failed')
         raise twitter_bad_gateway_exception
     else:
         if req.status_code < 200 or req.status_code > 299:
+            await update_post_status_in_db(db_pool, post_id, 'failed')
             raise HTTPException(
                 status_code=req.status_code,
                 detail=req.text
             )
         file_logger.info(f"Scheduled post successfully sent: {req.json()}")
+        
+        await update_post_status_in_db(db_pool, post_id, 'sent')
         await redis_client.delete(f"{post_id}:job_id")
-        return

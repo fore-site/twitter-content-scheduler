@@ -182,7 +182,6 @@ async def send_scheduled_tweet(post_id: int, user_id: int, token: dict, tweet_bo
         raise twitter_bad_gateway_exception
     else:
         if req.status_code < 200 or req.status_code > 299:
-            file_logger.exception(req.json())
             raise HTTPException(
                 status_code=req.status_code,
                 detail=req.text

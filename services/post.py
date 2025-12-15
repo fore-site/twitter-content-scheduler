@@ -86,7 +86,8 @@ async def create_post(user_id: Annotated[int, Depends(CheckJwt())], post_body: A
                             'date',
                             run_date=post_body.scheduled_time,
                             args=[post_id, user_id, token, post_body],
-                            id=job_id)
+                            id=job_id,
+                            jobstore='postgres')
     
     # SAVE JOB ID TO REDIS FOR FUTURE MODIFICATION
     try:

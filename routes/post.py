@@ -25,5 +25,5 @@ async def make_post(post: Annotated[BasePost, Depends(create_post)]):
     return post
 
 @router.put("/posts/{post_id}", response_model=BasePost)
-async def post_update(post_id: int, updated_post: Annotated[BasePost, Depends(update_post)]):
+async def post_update(updated_post: Annotated[BasePost, Depends(update_post)]):
     return updated_post

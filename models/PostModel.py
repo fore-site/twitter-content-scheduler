@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from fastapi import UploadFile
 from pydantic import BaseModel, Field, field_validator, ValidationInfo
 from models.TypeModel import PostStatus
@@ -20,7 +20,7 @@ class BasePost(BaseModel):
         minute = info.data.get("minutes")
         hour = info.data.get("hours")
 
-        scheduled_time = timedelta(days=day, minutes=minute, hours=hour) + datetime.now()
+        scheduled_time = timedelta(days=day, minutes=minute, hours=hour) + datetime.now(tz=timezone.utc)
         return scheduled_time
 
 class UpdatePost(BasePost):

@@ -1,4 +1,4 @@
-from apscheduler.events import EVENT_JOB_ERROR, EVENT_JOB_EXECUTED
+from apscheduler.events import EVENT_JOB_ERROR, EVENT_JOB_EXECUTED, EVENT_JOB_MISSED
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from config.db import db_pool
@@ -23,7 +23,7 @@ async def lifespan(instance: FastAPI):
 
     scheduler.start()
 
-    scheduler.add_listener(event_listener, EVENT_JOB_EXECUTED | EVENT_JOB_ERROR)
+    scheduler.add_listener(event_listener, EVENT_JOB_EXECUTED | EVENT_JOB_ERROR | EVENT_JOB_MISSED)
 
     yield
 

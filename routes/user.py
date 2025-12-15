@@ -15,7 +15,7 @@ async def login_user():
     res = RedirectResponse(auth.auth_url)
     return res
 
-@router.get("/", response_model=Token)
+@router.get("/callback", response_model=Token)
 async def callback_home(request: Request):
     try:
         token = await auth.twitter_client.fetch_token(url=auth.token_uri,

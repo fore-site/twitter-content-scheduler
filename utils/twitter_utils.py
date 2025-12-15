@@ -4,8 +4,9 @@ from utils.db_utils import update_post_status_in_db
 from fastapi import HTTPException, status, UploadFile
 from models.PostModel import BasePost, UpdatePost
 from utils.auth_utils import twitter_client
+from redis.exceptions import ConnectionError as RedisConnectionError
 from utils.common import check_file_type
-from utils.exceptions import twitter_timeout_exception, twitter_bad_gateway_exception
+from utils.exceptions import twitter_timeout_exception, twitter_bad_gateway_exception, redis_connection_exception
 import httpx
 import logging
 import time
@@ -169,7 +170,15 @@ async def send_scheduled_tweet(post_id: int, user_id: int, token: dict, tweet_bo
     
     if media_ids:
         request_data.update({"media": {"media_ids": media_ids}})
+
+    # REMOVE JOB ID FROM REDIS SINCE JOB WILL BE REMOVED FROM DATABASE UPON EXECUTION BY THE SCHEDULER
+    try:
+        await redis_client.delete(f"{post_id}:job_id")
+        logger.info("Job ID removed from redis")
+    except RedisConnectionError:
+        logger.info(f"Failed to remove job ID from redis, {redis_connection_exception}")
     
+    # SEND TWEET
     try:
         req = await twitter_client.post(
             url="https://api.x.com/2/tweets",
@@ -187,10 +196,8 @@ async def send_scheduled_tweet(post_id: int, user_id: int, token: dict, tweet_bo
             await update_post_status_in_db(db_pool, post_id, 'failed')
             raise HTTPException(
                 status_code=req.status_code,
-                detail=req.text
+                detail=req. text
             )
         file_logger.info(f"Scheduled post successfully sent: {req.json()}")
         
         await update_post_status_in_db(db_pool, post_id, 'sent')
-        await redis_client.delete(f"{post_id}:job_id")
-        logger.info("Job ID removed from redis")

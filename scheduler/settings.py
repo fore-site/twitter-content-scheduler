@@ -1,6 +1,6 @@
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
-from apscheduler.executors.pool import ThreadPoolExecutor
+from apscheduler.executors.asyncio import AsyncIOExecutor
 from config.settings import SQLALCHEMY_URI 
 from datetime import timezone
 
@@ -9,7 +9,7 @@ job_stores = {
 }
 
 executors = {
-    'default': ThreadPoolExecutor(20)
+    'default': AsyncIOExecutor()
 }
 
 job_defaults = {

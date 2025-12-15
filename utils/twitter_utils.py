@@ -193,3 +193,4 @@ async def send_scheduled_tweet(post_id: int, user_id: int, token: dict, tweet_bo
         
         await update_post_status_in_db(db_pool, post_id, 'sent')
         await redis_client.delete(f"{post_id}:job_id")
+        logger.info("Job ID removed from redis")

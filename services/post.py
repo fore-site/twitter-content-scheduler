@@ -87,7 +87,8 @@ async def create_post(user_id: Annotated[int, Depends(CheckJwt())], post_body: A
                             run_date=post_body.scheduled_time,
                             args=[post_id, user_id, token, post_body],
                             id=job_id,
-                            jobstore='postgres')
+                            jobstore='postgres',
+                            misfire_grace_time=None)
     
     # SAVE JOB ID TO REDIS FOR FUTURE MODIFICATION
     try:
@@ -130,18 +131,18 @@ async def update_post(post_id: int, user_id: Annotated[int, Depends(CheckJwt())]
                 scheduled_time = %(scheduled_time)s
             WHERE posts.user_id = %(user_id)s AND
                     posts.id = %(post_id)s AND
-                    posts.post_status <> %(post_status)s
+                    posts.post_status = %(post_status)s
             RETURNING id
     """, {"text": post_body.text, 
           "media": post_body.media, 
           "scheduled_time": post_body.scheduled_time,
           "user_id": user_id,
           "post_id": post_id,
-          "post_status": PostStatus.sent.value})
+          "post_status": PostStatus.pending.value})
             result = await cur.fetchone()
         if result is None:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, 
-                                    detail="Cannot update an already sent post.")
+                                    detail="Can only update a pending post.")
     delattr(post_body, 'files')
 
     # MODIFY JOB IN SCHEDULER
@@ -155,3 +156,4 @@ async def update_post(post_id: int, user_id: Annotated[int, Depends(CheckJwt())]
                         args=[post_id, user_id, token, post_body])
     
     return post_body
+

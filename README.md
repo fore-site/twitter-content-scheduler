@@ -9,7 +9,7 @@ Interactive docs: `/docs` (Swagger UI), `/redoc`
 
 Authentication
 
--   Initial sign-in: OAuth (Twitter/X) via `/v1/login` → `/v1/callback` (handled by utils.auth_utils).
+-   Initial sign-in: OAuth (Twitter/X) via `/v1/login` → `/v1/callback`.
 -   Protected endpoints: JWT Bearer (validated by dependencies such as `CheckJwt()` and `get_current_active_user`).
 
 Routes
@@ -19,13 +19,12 @@ Routes
     -   Description: Redirects the user to the Twitter/X OAuth authorization URL.
     -   Auth: none
     -   curl: `curl -i http://localhost:8000/v1/login`
-    -   Response: 302/307 redirect to provider `Location: <auth_url>`
+    -   Response: 302/307 redirect to provider.
 
 -   GET /v1/callback
 
     -   Description: OAuth callback. Exchanges code for access/refresh tokens and returns `Token`.
     -   Auth: none (called by provider)
-    -   curl: `curl -i "http://localhost:8000/v1/callback?code=<code>&state=<state>"`
     -   Example response:
         ```json
         {

@@ -36,7 +36,7 @@ Routes
 
 -   GET /v1/profile
 
-    -   Description: Return the current authenticated user's profile (`UserOut`).
+    -   Description: Return the current authenticated user's profile.
     -   Auth: Bearer JWT
     -   curl: `curl -H "Authorization: Bearer <JWT>" http://localhost:8000/v1/profile`
     -   httpx (async):
@@ -54,7 +54,7 @@ Routes
 
 -   PUT /v1/profile
 
-    -   Description: Update current user's profile (`BaseUser`) by fetching data from X API.
+    -   Description: Update current user's profile by fetching data from X API.
     -   Auth: Bearer JWT
     -   curl:
         ```
@@ -63,7 +63,7 @@ Routes
 
 -   GET /v1/refresh
 
-    -   Description: Exchange a refresh token (service handles specifics) for a new access token (`Token`).
+    -   Description: Exchange a refresh token for a new access token.
     -   Auth: Bearer JWT
     -   curl: `curl -H "Authorization: Bearer <REFRESH_TOKEN>" http://localhost:8000/v1/refresh`
 
@@ -79,7 +79,7 @@ Routes
 
 -   GET /v1/posts/{post_id}
 
-    -   Description: Retrieve a scheduled post (`PostOut`).
+    -   Description: Retrieve a scheduled post.
     -   Auth: Bearer JWT
     -   curl: `curl -H "Authorization: Bearer <JWT>" http://localhost:8000/v1/posts/123`
     -   Example response:
@@ -95,7 +95,7 @@ Routes
 
 -   POST /v1/posts
 
-    -   Description: Create a scheduled post (`BasePost`). Returns 201 Created.
+    -   Description: Create a scheduled post. Returns 201 Created.
     -   Auth: Bearer JWT
     -   curl:
         ```

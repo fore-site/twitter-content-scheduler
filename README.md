@@ -28,7 +28,11 @@ Routes
     -   curl: `curl -i "http://localhost:8000/v1/callback?code=<code>&state=<state>"`
     -   Example response:
         ```json
-        { "access_token": "...", "refresh_token": "...", "expires_in": 3600 }
+        {
+            "access_token": "...",
+            "refresh_token": "...",
+            "token_type": "bearer"
+        }
         ```
 
 -   GET /v1/profile
@@ -46,23 +50,22 @@ Routes
         ```
     -   Example response:
         ```json
-        { "id": 1, "username": "jdoe", "name": "John Doe" }
+        { "id": 1, "username": "jdoe", "display_name": "John Doe" }
         ```
 
 -   PUT /v1/profile
 
-    -   Description: Update current user's profile (`BaseUser`).
+    -   Description: Update current user's profile (`BaseUser`) by fetching data from X API.
     -   Auth: Bearer JWT
     -   curl:
         ```
-        curl -X PUT -H "Authorization: Bearer <JWT>" -H "Content-Type: application/json" \
-          -d '{"name":"New Name"}' http://localhost:8000/v1/profile
+        curl -X PUT -H "Authorization: Bearer <JWT>" http://localhost:8000/v1/profile
         ```
 
 -   GET /v1/refresh
 
     -   Description: Exchange a refresh token (service handles specifics) for a new access token (`Token`).
-    -   Auth: depends on refresh flow (see `get_new_access_token`)
+    -   Auth: Bearer JWT
     -   curl: `curl -H "Authorization: Bearer <REFRESH_TOKEN>" http://localhost:8000/v1/refresh`
 
 -   POST /v1/logout
@@ -72,15 +75,8 @@ Routes
     -   curl: `curl -X POST -H "Authorization: Bearer <JWT>" http://localhost:8000/v1/logout`
     -   Example response:
         ```json
-        { "msg": "tokens revoked" }
+        { "detail": "access token revoked" }
         ```
-
--   GET /v1/get-post
-
-    -   Description: Fetch user's tweets from X API. Uses `CheckJwt()` to get the user id and fetch OAuth from Redis. Returns the X API response.
-    -   Auth: Bearer JWT
-    -   curl: `curl -H "Authorization: Bearer <JWT>" http://localhost:8000/v1/get-post`
-    -   Response: JSON returned by X API (tweets list)
 
 -   GET /v1/posts/{post_id}
 
@@ -91,9 +87,10 @@ Routes
         ```json
         {
             "id": 123,
-            "content": "Hello",
-            "scheduled_at": "2025-12-18T10:00:00Z",
-            "status": "PENDING"
+            "user_id": 456,
+            "text": "Hello",
+            "scheduled_time": "2025-12-18T10:00:00Z",
+            "post_status": "pending"
         }
         ```
 
@@ -103,8 +100,8 @@ Routes
     -   Auth: Bearer JWT
     -   curl:
         ```
-        curl -X POST -H "Authorization: Bearer <JWT>" -H "Content-Type: application/json" \
-          -d '{"content":"Hello","scheduled_at":"2025-12-18T10:00:00Z"}' http://localhost:8000/v1/posts
+        curl -X POST -H "Authorization: Bearer <JWT>" -H "Content-Type: multipart/form-data" \
+          -F "text=Hello world" -F "minutes=30" http://localhost:8000/v1/posts
         ```
 
 -   PUT /v1/posts/{post_id}
@@ -112,12 +109,12 @@ Routes
     -   Auth: Bearer JWT
     -   curl:
         ```
-        curl -X PUT -H "Authorization: Bearer <JWT>" -H "Content-Type: application/json" \
-          -d '{"content":"Updated content"}' http://localhost:8000/v1/posts/123
+        curl -X PUT -H "Authorization: Bearer <JWT>" -H "Content-Type: multipart/form-data" \
+          -F "text=Update text" http://localhost:8000/v1/posts/123
         ```
 
 Notes
 
 -   For exact request and response fields consult the Pydantic models in `models/` (e.g., `UserModel.py`, `TokenModel.py`, `PostModel.py`).
 -   Error handling follows standard FastAPI patterns (HTTP status codes with JSON detail messages).
--   Protected endpoints rely on project dependencies (see `utils.dependencies.CheckJwt`, `services.user.get_current_active_user`).
+-   Project is still being developed...

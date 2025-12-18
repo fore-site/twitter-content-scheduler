@@ -1,12 +1,13 @@
 from fastapi import Depends, APIRouter, status
 from typing import Annotated
-from utils.auth_utils import twitter_client
-from utils.dependencies import CheckJwt
-from utils.common import fetch_oauth_from_redis
 from models.PostModel import BasePost, PostOut
-from services.post import create_post, update_post, get_post
+from services.post import create_post, update_post, get_post, get_all_posts
 
 router = APIRouter()
+
+@router.get("/posts")
+async def fetch_all_post(posts: Annotated[list[PostOut], Depends(get_all_posts)]):
+    return posts
 
 @router.get("/posts/{post_id}", response_model=PostOut)
 async def fetch_post(post: Annotated[PostOut, Depends(get_post)]):

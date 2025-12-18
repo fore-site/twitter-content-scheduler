@@ -17,22 +17,34 @@ import uuid
 
 logger = logging.getLogger()
 
+async def get_all_posts(user_id: Annotated[int, Depends(CheckJwt())]):
+    """Logic to fetch all scheduled tweets from database."""
+    async with db.db_pool.connection() as conn:
+        async with conn.cursor(row_factory=dict_row) as cur:
+            await cur.execute("""
+                SELECT * FROM posts
+                WHERE posts.user_id = %(user_id)s)
+                """,{"user_id": user_id})
+            result = await cur.fetchone()
+            if result is None:
+                return []
+            else:
+                return result
+
 async def get_post(post_id: int, user_id: Annotated[int, Depends(CheckJwt())]):
     """Logic to fetch tweet and media from database"""
-    async with db.db_pool:
-        async with db.db_pool.connection() as conn:
-            async with conn.cursor(row_factory=dict_row) as cur:
-                await cur.execute("""
+    async with db.db_pool.connection() as conn:
+        async with conn.cursor(row_factory=dict_row) as cur:
+            await cur.execute("""
                 SELECT * 
                 FROM posts
                 WHERE posts.id = %(post_id)s AND
                     posts.user_id = %(user_id)s
             """, {"post_id": post_id, 
                   "user_id": user_id})
-                result = await cur.fetchone()
-        if result is None:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, 
-                                detail="Server could not find post created by current user.")
+            result = await cur.fetchone()
+    if result is None:
+        return []
     post = PostOut(**result)
     return post
 

@@ -116,4 +116,5 @@ Notes
 
 -   For exact request and response fields consult the Pydantic models in `models/` (e.g., `UserModel.py`, `TokenModel.py`, `PostModel.py`).
 -   Error handling follows standard FastAPI patterns (HTTP status codes with JSON detail messages).
+-   API is rate-limited to 5 requests per minute
 -   Project is still being developed...

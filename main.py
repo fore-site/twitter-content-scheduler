@@ -1,10 +1,14 @@
-from apscheduler.events import EVENT_JOB_ERROR, EVENT_JOB_EXECUTED, EVENT_JOB_MISSED
+from apscheduler.events import EVENT_JOB_ERROR, EVENT_JOB_EXECUTED
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from config.db import db_pool
+from config.limiter import limiter
 from routes import user, post
 from scheduler.settings import scheduler
 from scheduler.listener import event_listener
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.middleware import SlowAPIASGIMiddleware
+from slowapi.errors import RateLimitExceeded
 from starlette_context.middleware import ContextMiddleware
 from starlette_context import plugins
 import logging
@@ -23,7 +27,7 @@ async def lifespan(instance: FastAPI):
 
     scheduler.start()
 
-    scheduler.add_listener(event_listener, EVENT_JOB_EXECUTED | EVENT_JOB_ERROR | EVENT_JOB_MISSED)
+    scheduler.add_listener(event_listener, EVENT_JOB_EXECUTED | EVENT_JOB_ERROR)
 
     yield
 
@@ -32,6 +36,10 @@ async def lifespan(instance: FastAPI):
     scheduler.shutdown()
 
 app = FastAPI(lifespan=lifespan)
+app.state.limiter = limiter
+
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+app.add_middleware(SlowAPIASGIMiddleware)
 app.add_middleware(
     ContextMiddleware,
     plugins=(

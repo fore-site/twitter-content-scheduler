@@ -17,19 +17,24 @@ import uuid
 
 logger = logging.getLogger()
 
-async def get_all_posts(user_id: Annotated[int, Depends(CheckJwt())]):
+async def get_all_posts(user_id: Annotated[int, Depends(CheckJwt())], page: int = 1, page_size: int = 10):
     """Logic to fetch all scheduled tweets from database."""
+    offset = (page_size * page) - page_size
     async with db.db_pool.connection() as conn:
         async with conn.cursor(row_factory=dict_row) as cur:
             await cur.execute("""
                 SELECT * FROM posts
-                WHERE posts.user_id = %(user_id)s)
-                """,{"user_id": user_id})
+                WHERE posts.user_id = %(user_id)s
+                LIMIT %(limit)s
+                OFFSET %(offset)s
+                """,{"user_id": user_id,
+                     "limit": page_size,
+                     "offset": offset})
             result = await cur.fetchone()
             if result is None:
                 return []
             else:
-                return result
+                return {"data": result}
 
 async def get_post(post_id: int, user_id: Annotated[int, Depends(CheckJwt())]):
     """Logic to fetch tweet and media from database"""

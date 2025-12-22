@@ -19,18 +19,22 @@ logger = logging.getLogger()
 
 async def get_all_posts(user_id: Annotated[int, Depends(CheckJwt())], page: int = 1, page_size: int = 10):
     """Logic to fetch all scheduled tweets from database."""
+    if page_size > 10:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                            detail="Page size cannot exceed 10.")
+    
     offset = (page_size * page) - page_size
     async with db.db_pool.connection() as conn:
         async with conn.cursor(row_factory=dict_row) as cur:
             await cur.execute("""
                 SELECT * FROM posts
                 WHERE posts.user_id = %(user_id)s
-                LIMIT %(limit)s
                 OFFSET %(offset)s
+                LIMIT %(limit)s
                 """,{"user_id": user_id,
                      "limit": page_size,
                      "offset": offset})
-            result = await cur.fetchone()
+            result = await cur.fetchall()
             if result is None:
                 return []
             else:

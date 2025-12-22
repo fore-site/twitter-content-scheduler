@@ -6,10 +6,10 @@ from services.post import create_post, update_post, get_post, get_all_posts
 router = APIRouter()
 
 @router.get("/posts")
-async def fetch_all_post(posts: Annotated[list[PostOut], Depends(get_all_posts)]):
+async def fetch_all_post(posts: Annotated[PostOut, Depends(get_all_posts)]):
     return posts
 
-@router.get("/posts/{post_id}", response_model=PostOut)
+@router.get("/posts/{post_id}", response_model=PostOut | list)
 async def fetch_post(post: Annotated[PostOut, Depends(get_post)]):
     return post
 

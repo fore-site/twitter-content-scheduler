@@ -176,7 +176,7 @@ async def send_scheduled_tweet(post_id: int, user_id: int, token: dict, tweet_bo
         await redis_client.delete(f"{post_id}:job_id")
         logger.info("Job ID removed from redis")
     except RedisConnectionError:
-        logger.info(f"Failed to remove job ID from redis, {redis_connection_exception}")
+        logger.warning(f"Failed to remove job ID from redis, {redis_connection_exception}")
     
     # SEND TWEET
     try:

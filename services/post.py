@@ -115,7 +115,7 @@ async def create_post(user_id: Annotated[int, Depends(CheckJwt())], post_body: A
     try:
         await db.redis_client.set(f'{post_id}:job_id', job_id)
     except RedisConnectionError:
-        return redis_connection_exception
+        logging.warning(f"Job ID failed to save to redis, {redis_connection_exception}")
     else:
         return post_body
 

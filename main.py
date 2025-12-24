@@ -1,3 +1,12 @@
+import asyncio
+import platform
+import uvicorn
+
+# MAKE ASYNCIO COMPATIBLE WITH PSYCOPG
+if platform.system() == "Windows":
+    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+
+
 from apscheduler.events import EVENT_JOB_ERROR, EVENT_JOB_EXECUTED
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
@@ -13,6 +22,7 @@ from starlette_context.middleware import ContextMiddleware
 from starlette_context import plugins
 import logging
 import logging.config
+
 
 @asynccontextmanager
 async def lifespan(instance: FastAPI):
@@ -50,3 +60,6 @@ app.add_middleware(
 
 app.include_router(user.router, prefix="/v1")
 app.include_router(post.router, prefix="/v1")
+
+if __name__ == "__main__":
+    uvicorn.run("main:app", host='127.0.0.1', port=5000, reload=True)

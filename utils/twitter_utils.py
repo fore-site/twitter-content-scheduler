@@ -186,12 +186,19 @@ async def send_scheduled_tweet(post_id: int, token: dict, tweet_body: BasePost |
             json=request_data
         )
     except httpx.ConnectTimeout:
-        send_scheduled_tweet
-        await update_post_status_in_db(db_pool, post_id, 'failed')
-        raise twitter_timeout_exception
+        logging.error(f"{twitter_timeout_exception}, retrying after 10 seconds...")
+        
+        time.sleep(10)
+
+        send_scheduled_tweet(post_id=post_id, token=token, tweet_body=tweet_body)
+        # await update_post_status_in_db(db_pool, post_id, 'failed')
     except httpx.ConnectError:
-        await update_post_status_in_db(db_pool, post_id, 'failed')
-        raise twitter_bad_gateway_exception
+        logging.error(f"{twitter_bad_gateway_exception}, retrying after 10 seconds...")
+        
+        time.sleep(10)
+
+        send_scheduled_tweet(post_id=post_id, token=token, tweet_body=tweet_body)
+        # await update_post_status_in_db(db_pool, post_id, 'failed')
     else:
         if req.status_code < 200 or req.status_code > 299:
             await update_post_status_in_db(db_pool, post_id, 'failed')

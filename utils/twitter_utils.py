@@ -5,6 +5,7 @@ from fastapi import HTTPException, status, UploadFile
 from models.PostModel import BasePost, UpdatePost
 from utils.auth_utils import twitter_client
 from redis.exceptions import ConnectionError as RedisConnectionError
+from tenacity import retry, stop_after_attempt, before_log, wait_exponential
 from utils.common import check_file_type
 from utils.exceptions import twitter_timeout_exception, twitter_bad_gateway_exception, redis_connection_exception
 import httpx
@@ -161,6 +162,10 @@ class ChunkedUpload(object):
                 else:
                     return res
                 
+@retry(before=before_log(logger, logging.DEBUG),
+       reraise=True,
+       stop=stop_after_attempt(5),
+       wait=wait_exponential(min=4, max=16))                
 async def send_scheduled_tweet(post_id: int, token: dict, tweet_body: BasePost | UpdatePost, media_ids: list | None = None):
     twitter_client.token = token
 
@@ -186,25 +191,17 @@ async def send_scheduled_tweet(post_id: int, token: dict, tweet_body: BasePost |
             json=request_data
         )
     except httpx.ConnectTimeout:
-        logging.error(f"{twitter_timeout_exception}, retrying after 10 seconds...")
-        
-        time.sleep(10)
-
-        send_scheduled_tweet(post_id=post_id, token=token, tweet_body=tweet_body)
+        raise twitter_timeout_exception
         # await update_post_status_in_db(db_pool, post_id, 'failed')
     except httpx.ConnectError:
-        logging.error(f"{twitter_bad_gateway_exception}, retrying after 10 seconds...")
-        
-        time.sleep(10)
-
-        send_scheduled_tweet(post_id=post_id, token=token, tweet_body=tweet_body)
+        raise twitter_bad_gateway_exception
         # await update_post_status_in_db(db_pool, post_id, 'failed')
     else:
         if req.status_code < 200 or req.status_code > 299:
             await update_post_status_in_db(db_pool, post_id, 'failed')
             raise HTTPException(
                 status_code=req.status_code,
-                detail=req. text
+                detail=req.text
             )
         file_logger.info(f"Scheduled post successfully sent: {req.json()}")
         

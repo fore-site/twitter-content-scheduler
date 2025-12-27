@@ -13,6 +13,7 @@ from utils.exceptions import redis_connection_exception
 from utils.common import check_character_limit, fetch_oauth_from_redis
 from utils.twitter_utils import send_scheduled_tweet
 import logging
+import math
 import uuid
 
 logger = logging.getLogger()
@@ -38,7 +39,14 @@ async def get_all_posts(user_id: Annotated[int, Depends(CheckJwt())], page: int 
             if result is None:
                 return []
             else:
-                return {"data": result}
+                return {"data": result,
+                        "pagination": {
+                            "current_page": page,
+                            "total_pages": math.ceil(len(result)/page_size),
+                            "total_records": len(result),
+                            "per_page": page_size,
+                            "next_page": f'/v1/posts?page={page + 1}&page_size={page_size}'
+                        }}
 
 async def get_post(post_id: int, user_id: Annotated[int, Depends(CheckJwt())]):
     """Logic to fetch tweet and media from database"""
@@ -106,7 +114,7 @@ async def create_post(user_id: Annotated[int, Depends(CheckJwt())], post_body: A
     job = scheduler.add_job(send_scheduled_tweet,
                             'date',
                             run_date=post_body.scheduled_time,
-                            args=[post_id, user_id, token, post_body],
+                            args=[post_id, token, post_body],
                             id=job_id,
                             jobstore='postgres',
                             misfire_grace_time=None)
@@ -174,7 +182,7 @@ async def update_post(post_id: int, user_id: Annotated[int, Depends(CheckJwt())]
                         func=send_scheduled_tweet,
                         trigger='date',
                         run_date=post_body.scheduled_time,
-                        args=[post_id, user_id, token, post_body])
+                        args=[post_id, token, post_body])
     
     return post_body
 

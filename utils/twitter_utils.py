@@ -161,7 +161,7 @@ class ChunkedUpload(object):
                 else:
                     return res
                 
-async def send_scheduled_tweet(post_id: int, user_id: int, token: dict, tweet_body: BasePost | UpdatePost, media_ids: list | None = None):
+async def send_scheduled_tweet(post_id: int, token: dict, tweet_body: BasePost | UpdatePost, media_ids: list | None = None):
     twitter_client.token = token
 
     request_data = {
@@ -186,6 +186,7 @@ async def send_scheduled_tweet(post_id: int, user_id: int, token: dict, tweet_bo
             json=request_data
         )
     except httpx.ConnectTimeout:
+        send_scheduled_tweet
         await update_post_status_in_db(db_pool, post_id, 'failed')
         raise twitter_timeout_exception
     except httpx.ConnectError:

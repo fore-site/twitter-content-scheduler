@@ -13,6 +13,7 @@ async def update_oauth_token(token, refresh_token = None, access_token = None):
     """Callable that saves new oauth token to redis database."""    
     # SAVE TOKEN TO REDIS, THIS IS A TEMPORARY STORAGE
     if refresh_token or access_token:
+        # RETRIEVE USER_ID FROM THE REQUEST-RESPONSE CONTEXT
         user_id = context.get("user_id")
         
         key = f"{user_id}:oauth"

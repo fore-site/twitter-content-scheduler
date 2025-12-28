@@ -5,7 +5,7 @@ from fastapi import HTTPException, status, UploadFile
 from models.PostModel import BasePost, UpdatePost
 from utils.auth_utils import twitter_client
 from redis.exceptions import ConnectionError as RedisConnectionError
-from tenacity import retry, stop_after_attempt, before_log, wait_exponential
+from tenacity import retry, stop_after_attempt, before_log, wait_exponential, retry_if_exception_type
 from utils.common import check_file_type
 from utils.exceptions import twitter_timeout_exception, twitter_bad_gateway_exception, redis_connection_exception
 import httpx
@@ -164,6 +164,7 @@ class ChunkedUpload(object):
                 
 @retry(before=before_log(logger, logging.DEBUG),
        reraise=True,
+       retry=retry_if_exception_type(HTTPException),
        stop=stop_after_attempt(5),
        wait=wait_exponential(min=4, max=16))                
 async def send_scheduled_tweet(post_id: int, token: dict, tweet_body: BasePost | UpdatePost, media_ids: list | None = None):

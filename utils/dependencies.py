@@ -66,6 +66,7 @@ class CheckJwt:
                                     detail="Refresh token required.")
             if self.dict_format:
                 return payload
+            # STORE USER ID IN REQUEST-RESPONSE CONTEXT
             context["user_id"] = user_id
             return int(user_id)
     

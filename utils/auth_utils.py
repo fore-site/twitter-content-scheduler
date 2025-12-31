@@ -34,6 +34,9 @@ def generate_verifier():
 # CREATE JWT ACCESS TOKEN
 def create_access_token(data: dict):
     """Create a jwt access token."""
+    if not data.get("sub"):
+        raise ValueError("Invalid payload key, must use 'sub' as its unique identifier.")
+    
     to_encode = data.copy()
     expire = datetime.now(tz=timezone.utc) + timedelta(minutes=30)
     to_encode.update({"sub": str(data["sub"]), "exp": expire, "jti": str(uuid.uuid4()), "type": "access"})
@@ -42,6 +45,9 @@ def create_access_token(data: dict):
 
 def create_refresh_token(data: dict):
     """Create a jwt refresh token."""
+    if not data.get("sub"):
+        raise ValueError("Invalid payload key, must use 'sub' as its unique identifier.")
+
     to_encode = data.copy()
     expire = datetime.now(tz=timezone.utc) + timedelta(days=7)
     to_encode.update({"sub": str(data["sub"]), "exp": expire, "jti": str(uuid.uuid4()), "type": "refresh"})

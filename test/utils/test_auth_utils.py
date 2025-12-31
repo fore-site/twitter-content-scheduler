@@ -14,3 +14,15 @@ class TestTokens:
         payload = {"id": 1234}
         with pytest.raises(ValueError):
             create_access_token(payload)
+
+    def test_create_refresh_token(self):
+        payload = {"sub": 1234}
+        access_token = create_refresh_token(payload)
+        assert access_token != None
+
+    def test_create_refresh_token_with_invalid_payload_key(self):
+        payload = {"id": 1234}
+        with pytest.raises(ValueError):
+            create_refresh_token(payload)
+
+    

@@ -9,6 +9,7 @@ Authlib
 httpx
 pyjwt
 pytest
+pytest-asyncio
 python-multipart
 boto3
 sqlalchemy

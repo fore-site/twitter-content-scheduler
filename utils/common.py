@@ -34,6 +34,8 @@ async def fetch_oauth_from_redis(key):
     """Fetch oauth token from redis database. Fully provide the key as arg."""
     try:
         token = await redis_client.get(key)
+        if token is None:
+            raise ValueError("Invalid redis database key.")
     except RedisConnectionError:
         raise redis_connection_exception
     else:

@@ -18,7 +18,7 @@ async def login_user():
 @router.get("/callback", response_model=Token)
 async def callback_home(request: Request):
     try:
-        token = await auth.twitter_client.fetch_token(url=auth.token_uri,
+        await auth.twitter_client.fetch_token(url=auth.token_uri,
                                   authorization_response=str(request.url),
                                   code_verifier=auth.code_verifier)
     except httpx.ConnectTimeout:

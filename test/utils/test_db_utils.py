@@ -57,5 +57,5 @@ SELECT post_status FROM posts WHERE id = %(post_id)s""", {"post_id":mock_user_an
 async def test_update_post_status_invalid_id(mock_user_and_post):
     status = 'ssent'
     with pytest.raises(ValidationError):
-        await update_post_status_in_db(db_pool, mock_user_and_post, status)
+        await update_post_status_in_db(db_pool,mock_user_and_post, status)
 

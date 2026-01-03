@@ -26,6 +26,10 @@ async def fetch_user(token = None):
     except httpx.ConnectError:
         raise twitter_bad_gateway_exception
     else:
+        if async_current_user.status_code < 200 or async_current_user.status_code > 299:
+            raise HTTPException(status_code=async_current_user.status_code,
+                                detail=async_current_user.text)
+        
         current_user = async_current_user.json()
         return current_user
     

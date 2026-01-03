@@ -7,6 +7,9 @@ from models.TokenModel import Token
 from services.user import get_access_refresh_token, get_current_active_user, get_new_access_token, revoke_tokens, update_user
 from typing import Annotated
 import httpx
+import logging
+
+file_logger = logging.getLogger('fileLogger')
 
 router = APIRouter()
 
@@ -21,6 +24,7 @@ async def callback_home(request: Request):
         await auth.twitter_client.fetch_token(url=auth.token_uri,
                                   authorization_response=str(request.url),
                                   code_verifier=auth.code_verifier)
+        file_logger.debug(f"Oauth token generated: {auth.twitter_client.token}")
     except httpx.ConnectTimeout:
         raise HTTPException(
             status_code=status.HTTP_504_GATEWAY_TIMEOUT,

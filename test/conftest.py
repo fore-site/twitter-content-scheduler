@@ -3,6 +3,8 @@ asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
 
 import pytest_asyncio
+from fastapi import UploadFile
+from pathlib import Path
 from config.db import db_pool
 from datetime import datetime
 
@@ -38,3 +40,11 @@ async def mock_user_and_post():
             WHERE id = %(post_id)s
         """, {"post_id": post_id})
     await db_pool.close()
+
+@pytest_asyncio.fixture(loop_scope='session', scope='session')
+async def mock_uploadfile():
+    path = Path('C:/Users/Oguns/Figure_2.png')
+    with open(path, 'rb') as file:
+        content = file.read()
+    uploadfile_obj = UploadFile(file=content, filename='figure_2.png')
+    yield uploadfile_obj

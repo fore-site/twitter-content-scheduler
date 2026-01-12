@@ -1,5 +1,3 @@
-from fastapi import UploadFile
-from pathlib import Path
 from utils.common import fetch_oauth_from_redis, check_file_type
 import json
 import pytest
@@ -10,13 +8,6 @@ from config.db import redis_client
 async def mock_redis_oauth():
     await redis_client.set('123:oauth', json.dumps({"access_token": 'nalfo', "refresh_token": 'ahfdfn'}), ex=300)
 
-@pytest_asyncio.fixture(loop_scope='module', scope='module')
-async def mock_uploadfile():
-    path = Path('C:/Users/Oguns/Figure_2.png')
-    with open(path, 'rb') as file:
-        content = file.read()
-    uploadfile_obj = UploadFile(file=content, filename='figure_2.png')
-    yield uploadfile_obj
 
 class TestTokens:
 

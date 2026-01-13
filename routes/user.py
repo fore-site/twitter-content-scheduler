@@ -4,7 +4,12 @@ from fastapi import APIRouter, Request, Depends, HTTPException, status
 from fastapi.responses import RedirectResponse
 from models.UserModel import BaseUser, UserOut
 from models.TokenModel import Token
-from services.user import get_access_refresh_token, get_current_active_user, get_new_access_token, revoke_tokens, update_user
+from services.user import (get_access_refresh_token, 
+                           get_current_active_user, 
+                           get_new_access_token, 
+                           revoke_tokens, 
+                           update_user,
+                           deactivate_user)
 from typing import Annotated
 import httpx
 import logging
@@ -50,4 +55,8 @@ async def token_refresh(new_access_token: Annotated[Token, Depends(get_new_acces
 
 @router.post("/logout")
 async def logout_user(msg: Annotated[dict, Depends(revoke_tokens)]) -> dict:
+    return msg
+
+@router.put("/deactivate")
+async def deactivate_user(msg: Annotated[dict, Depends(deactivate_user)]) -> dict:
     return msg

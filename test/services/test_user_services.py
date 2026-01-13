@@ -1,23 +1,46 @@
-from services.user import get_new_access_token, create_user_in_db, get_access_refresh_token, revoke_tokens, get_current_active_user, get_current_user
+from services.user import (get_new_access_token,
+                        create_user_in_db,
+                        revoke_tokens,
+                        get_current_active_user,
+                        get_current_user, 
+                        update_user)
+import pytest
+from fastapi import HTTPException
+from models.TokenModel import Token
+from models.UserModel import BaseUser, UserOut
 
-headers = {
-    "Authorization": "Bearer "
-}
+@pytest.mark.asyncio(loop_scope='session')
+async def test_get_access_token():
+    token_obj = await get_new_access_token(123)
+    assert isinstance(token_obj, Token)
 
-def test_access_retrieval():
-    assert get_new_access_token is not None
+# @pytest.mark.asyncio(loop_scope='session')
+# async def test_create_user():
+#     user = BaseUser(id=1234, username='fores', display_name='site', is_premium=True)
+#     created_user = await create_user_in_db(user)
+#     assert len(created_user) == 2, "Tuple should contain access and refresh tokens"
 
-def test_create_user():
-    assert create_user_in_db is not None
+@pytest.mark.asyncio(loop_scope='session')
+async def test_get_current_user():
+    user = await get_current_user(123)
+    assert isinstance(user, UserOut)
 
-def test_get_access_refresh():
-    assert get_access_refresh_token is not None
+@pytest.mark.asyncio(loop_scope='session')
+async def test_get_current_user_invalid_id():
+    with pytest.raises(HTTPException):
+        await get_current_user(1)
 
-def test_revoke_tokens():
-    assert revoke_tokens is not None
+@pytest.mark.asyncio(loop_scope='session')
+async def test_get_active_user():
+    user = await get_current_user(123)
+    active_user = await get_current_active_user(user)
+    assert isinstance(active_user, UserOut)
 
-def test_get_current_user():
-    assert get_current_user is not None
+@pytest.mark.asyncio(loop_scope='session')
+async def test_get_disabled_user():
+    user = await get_current_user(1234)
+    with pytest.raises(HTTPException):
+        await get_current_active_user(user)
 
-def test_active_user():
-    assert get_current_active_user is not None
+# def test_revoke_tokens():
+#     assert revoke_tokens is not None

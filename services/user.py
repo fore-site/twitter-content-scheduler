@@ -91,6 +91,8 @@ async def get_current_user(user_id: Annotated[int, Depends(CheckJwt())]):
                         WHERE u.id = %(user_id)s               
                     """, {"user_id": user_id})
             result = await cur.fetchall()
+            if not result:
+                raise HTTPException(status_code=404, detail=f'User {user_id} does not exist')
     result_dict = result[0]
     user = UserOut(**result_dict)
     return user
@@ -153,3 +155,15 @@ async def update_user(user_id: Annotated[int, Depends(CheckJwt())]):
                 "verified": validated_user.is_premium, 
                 "user_id": user_id})
     return validated_user
+
+async def deactivate_user(user_id: Annotated[int, Depends(CheckJwt())]):
+    async with db.db_pool.connection() as conn:
+        async with conn.cursor() as cur:
+            await cur.execute("""
+        UPDATE users
+        SET user_status = %(deactivated)s
+        WHERE users.id = %(user_id)s
+""", {"deactivated": UserStatus.DEACTIVATED.value,
+      "user_id": user_id})
+    
+    return {"message": 'User deactivated successfully.'}

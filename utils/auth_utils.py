@@ -35,7 +35,7 @@ def generate_verifier():
 def create_access_token(data: dict):
     """Create a jwt access token."""
     if not data.get("sub"):
-        raise ValueError("Invalid payload key, must use 'sub' as its unique identifier.")
+        raise ValueError("Invalid payload key or value, must use 'sub' as its unique identifier or value cannot be None.")
     
     to_encode = data.copy()
     expire = datetime.now(tz=timezone.utc) + timedelta(minutes=30)

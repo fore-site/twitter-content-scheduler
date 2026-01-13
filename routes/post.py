@@ -1,7 +1,7 @@
 from fastapi import Depends, APIRouter, status
 from typing import Annotated
 from models.PostModel import BasePost, PostOut
-from services.post import create_post, update_post, get_post, get_all_posts
+from services.post import create_post, update_post, get_post, get_all_posts, delete_post
 
 router = APIRouter()
 
@@ -21,3 +21,7 @@ async def make_post(post: Annotated[BasePost, Depends(create_post)]):
 @router.put("/posts/{post_id}", response_model=BasePost)
 async def post_update(updated_post: Annotated[BasePost, Depends(update_post)]):
     return updated_post
+
+@router.delete("/posts/{post_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_post(msg: Annotated[None, Depends(delete_post)]) -> None:
+    return msg

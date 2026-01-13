@@ -7,6 +7,7 @@ from fastapi import UploadFile
 from pathlib import Path
 from config.db import db_pool
 from datetime import datetime
+from utils.auth_utils import create_access_token, create_refresh_token
 
 @pytest_asyncio.fixture(autouse=True, scope='session', loop_scope='session')
 async def mock_user_and_post():
@@ -48,3 +49,13 @@ async def mock_uploadfile():
         content = file.read()
     uploadfile_obj = UploadFile(file=content, filename='figure_2.png')
     yield uploadfile_obj
+
+@pytest_asyncio.fixture(loop_scope='session', scope='module')
+async def default_access_token():
+    access_token = create_access_token({"sub": 123})
+    yield access_token
+
+@pytest_asyncio.fixture(loop_scope='session', scope='module')
+async def default_refresh_token():
+    refresh_token = create_refresh_token({"sub": 123})
+    yield refresh_token

@@ -186,3 +186,11 @@ async def update_post(post_id: int, user_id: Annotated[int, Depends(CheckJwt())]
     
     return post_body
 
+async def delete_post(post_id: int, user_id: Annotated[int, Depends(CheckJwt())]) -> None:
+    async with db.db_pool.connection() as conn:
+        async with conn.cursor() as cur:
+            await cur.execute("""
+        DELETE FROM posts
+        WHERE id = %s AND user_id = %s
+""",  (post_id, user_id))
+    return None

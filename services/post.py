@@ -169,7 +169,7 @@ async def update_post(post_id: int, user_id: Annotated[int, Depends(CheckJwt())]
           "post_id": post_id,
           "post_status": PostStatus.pending.value})
             result = await cur.fetchone()
-        if result is None:
+        if not result:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, 
                                     detail="Can only update a pending post.")
     delattr(post_body, 'files')

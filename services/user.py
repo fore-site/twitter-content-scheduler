@@ -3,6 +3,7 @@ from fastapi import Depends, HTTPException, status
 from psycopg.rows import dict_row
 from typing import Annotated
 from utils.auth_utils import twitter_client, create_access_token, create_refresh_token
+from utils.db_utils import check_or_update_user_status
 from utils.dependencies import CheckJwt
 from utils.twitter_utils import fetch_user
 from utils.common import fetch_oauth_from_redis
@@ -52,7 +53,7 @@ async def get_access_refresh_token() -> Token:
                   display_name=current_user["data"].get("name"),
                   profile_img=current_user["data"].get("profile_image_url"), 
                   is_premium=current_user["data"].get("verified"))
-    
+
     # CHECK IF USER ALREADY EXISTS IN DATABASE, ELSE CREATE NEW USER
     payload = {"sub": validated_user.id}
     try:
@@ -61,6 +62,12 @@ async def get_access_refresh_token() -> Token:
         raise redis_connection_exception
     
     if user_exists_in_db:
+        # CHECK AND/OR UPDATE USER STATUS
+         
+        user_status = await check_or_update_user_status(db.db_pool, validated_user.id)
+        if user_status == UserStatus.DISABLED:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, 
+                    detail="User suspended.")
         # SAVE NEW OAUTH TOKEN TO REDIS
         serialized_token = json.dumps(twitter_client.token)
 
@@ -101,7 +108,7 @@ async def get_current_active_user(current_user: Annotated[UserOut, Depends(get_c
     """Logic to get authenticated user with an active status."""
     if current_user.user_status == UserStatus.DEACTIVATED:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, 
-                        detail="User does not exist.")
+                        detail="User deactivated.")
     elif current_user.user_status == UserStatus.DISABLED:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, 
                         detail="User suspended.")
@@ -166,4 +173,4 @@ async def deactivate_user(user_id: Annotated[int, Depends(CheckJwt())]):
 """, {"deactivated": UserStatus.DEACTIVATED.value,
       "user_id": user_id})
     
-    return {"message": 'User deactivated successfully.'}
+    return {"message": f'User {user_id} deactivated.'}

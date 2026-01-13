@@ -170,7 +170,7 @@ async def deactivate_user(user_id: Annotated[int, Depends(CheckJwt())]):
         UPDATE users
         SET user_status = %(deactivated)s
         WHERE users.id = %(user_id)s
-""", {"deactivated": UserStatus.DEACTIVATED.value,
+    """, {"deactivated": UserStatus.DEACTIVATED.value,
       "user_id": user_id})
     
     return {"message": f'User {user_id} deactivated.'}

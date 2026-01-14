@@ -4,17 +4,15 @@ from fastapi import Depends, Form, HTTPException, status
 from models.PostModel import BasePost, PostOut, UpdatePost
 from models.TypeModel import PostStatus
 from psycopg.rows import dict_row
-from redis.exceptions import ConnectionError as RedisConnectionError
 from services.media import get_media_id, upload_to_wasabi
 from scheduler.settings import scheduler
+from scheduler.job import add_job_to_scheduler
 from typing import Annotated
 from utils.dependencies import CheckJwt
-from utils.exceptions import redis_connection_exception
 from utils.common import check_character_limit, fetch_oauth_from_redis
 from utils.twitter_utils import send_scheduled_tweet
 import logging
 import math
-import uuid
 
 logger = logging.getLogger()
 
@@ -65,7 +63,8 @@ async def get_post(post_id: int, user_id: Annotated[int, Depends(CheckJwt())]):
     post = PostOut(**result)
     return post
 
-async def create_post(user_id: Annotated[int, Depends(CheckJwt())], post_body: Annotated[BasePost, Form(media_type="multipart/form-data")]):
+async def create_post(user_id: Annotated[int, Depends(CheckJwt())], 
+                      post_body: Annotated[BasePost, Form(media_type="multipart/form-data")]):
     """Logic to create tweet and attach media."""
     media_list = []
 
@@ -106,26 +105,13 @@ async def create_post(user_id: Annotated[int, Depends(CheckJwt())], post_body: A
                 user_id))
             result = await cur.fetchone()
             post_id = result[0]
+            
+    # DELETE FILES PROPERTY FROM POST_BODY OBJECT
     delattr(post_body, 'files')
 
-    # ADD JOB TO SCHEDULER
-    job_id = str(uuid.uuid4())
-    token = await fetch_oauth_from_redis(f"{user_id}:oauth")
-    job = scheduler.add_job(send_scheduled_tweet,
-                            'date',
-                            run_date=post_body.scheduled_time,
-                            args=[post_id, token, post_body],
-                            id=job_id,
-                            jobstore='postgres',
-                            misfire_grace_time=None)
-    
-    # SAVE JOB ID TO REDIS FOR FUTURE MODIFICATION
-    try:
-        await db.redis_client.set(f'{post_id}:job_id', job_id)
-    except RedisConnectionError:
-        logging.warning(f"Job ID failed to save to redis, {redis_connection_exception}")
-    else:
-        return post_body
+    await add_job_to_scheduler(user_id, post_id, post_body)
+
+    return post_body
 
 async def update_post(post_id: int, user_id: Annotated[int, Depends(CheckJwt())], post_body: Annotated[UpdatePost, Form(media_type="multipart/form-data")]):
     if post_body.text:

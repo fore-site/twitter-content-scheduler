@@ -10,7 +10,7 @@ class BasePost(BaseModel):
     days: int = 0
     hours: int  = 0
     minutes: int = 0
-    files: List[UploadFile] | None = None
+    files: List[UploadFile] | None = Field(None, validate_default=True)
     scheduled_time: datetime = Field(datetime.now(), validate_default=True)
     
     @field_validator("scheduled_time", mode="before")
@@ -22,6 +22,14 @@ class BasePost(BaseModel):
 
         scheduled_time = timedelta(days=day, minutes=minute, hours=hour) + datetime.now(tz=timezone.utc)
         return scheduled_time
+    
+    @field_validator("files", mode='after')
+    @classmethod
+    def check_empty_text_and_fileUpload(cls, files: List[str] | None, info: ValidationInfo) -> List[str] | None:
+        text = info.data.get('text')
+        if not text and not files:
+            raise ValueError("Both text and file upload cannot be empty at the same time")
+        return files
 
 class UpdatePost(BasePost):
     """Table Posts. Model for updating posts."""

@@ -1,6 +1,6 @@
 import uuid
 from config.db import redis_client
-from models.PostModel import BasePost
+from models.PostModel import BasePost, UpdatePost
 from redis.exceptions import ConnectionError as RedisConnectionError
 from scheduler.settings import scheduler
 from utils.common import fetch_oauth_from_redis
@@ -27,4 +27,16 @@ async def add_job_to_scheduler(user_id: int, post_id: int, post_body: BasePost) 
         await redis_client.set(f'{post_id}:job_id', job_id)
     except RedisConnectionError:
         logger.warning(f"Job ID failed to save to redis, {redis_connection_exception}")
+
+
+# MODIFY JOB IN SCHEDULER
+async def modify_job_in_scheduler(user_id: int, post_id: int, post_body: UpdatePost) -> None:
+    job_id = await redis_client.get(f"{post_id}:job_id")
+    token = await fetch_oauth_from_redis(f"{user_id}:oauth")
+    scheduler.modify_job(job_id=job_id, 
+                        jobstore='postgres', 
+                        func=send_scheduled_tweet,
+                        trigger='date',
+                        run_date=post_body.scheduled_time,
+                        args=[post_id, token, post_body])
     

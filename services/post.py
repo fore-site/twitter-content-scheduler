@@ -5,12 +5,10 @@ from models.PostModel import BasePost, PostOut, UpdatePost
 from models.TypeModel import PostStatus
 from psycopg.rows import dict_row
 from services.media import get_media_id, upload_to_wasabi
-from scheduler.settings import scheduler
-from scheduler.job import add_job_to_scheduler
+from scheduler.job import add_job_to_scheduler, modify_job_in_scheduler
 from typing import Annotated
 from utils.dependencies import CheckJwt
-from utils.common import check_character_limit, fetch_oauth_from_redis
-from utils.twitter_utils import send_scheduled_tweet
+from utils.common import check_character_limit
 import logging
 import math
 
@@ -105,15 +103,16 @@ async def create_post(user_id: Annotated[int, Depends(CheckJwt())],
                 user_id))
             result = await cur.fetchone()
             post_id = result[0]
-            
-    # DELETE FILES PROPERTY FROM POST_BODY OBJECT
+
+    # DELETE files ATTRIBUTE FROM POST_BODY OBJECT
     delattr(post_body, 'files')
 
     await add_job_to_scheduler(user_id, post_id, post_body)
 
     return post_body
 
-async def update_post(post_id: int, user_id: Annotated[int, Depends(CheckJwt())], post_body: Annotated[UpdatePost, Form(media_type="multipart/form-data")]):
+async def update_post(post_id: int, user_id: Annotated[int, Depends(CheckJwt())], 
+                      post_body: Annotated[UpdatePost, Form(media_type="multipart/form-data")]):
     if post_body.text:
         try:
             await check_character_limit(post_body.text, user_id)
@@ -162,18 +161,12 @@ async def update_post(post_id: int, user_id: Annotated[int, Depends(CheckJwt())]
         if not result:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, 
                                     detail="Can only update a pending post.")
+    
+    # DELETE files ATTRIBUTE FROM POST_BODY OBJECT
     delattr(post_body, 'files')
 
-    # MODIFY JOB IN SCHEDULER
-    job_id = await db.redis_client.get(f"{post_id}:job_id")
-    token = await fetch_oauth_from_redis(f"{user_id}:oauth")
-    scheduler.modify_job(job_id=job_id, 
-                        jobstore='postgres', 
-                        func=send_scheduled_tweet,
-                        trigger='date',
-                        run_date=post_body.scheduled_time,
-                        args=[post_id, token, post_body])
-    
+    await modify_job_in_scheduler(user_id, post_id, post_body)
+
     return post_body
 
 async def delete_post(post_id: int, user_id: Annotated[int, Depends(CheckJwt())]) -> None:

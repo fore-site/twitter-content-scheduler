@@ -1,4 +1,4 @@
-from services.post import create_post, update_post
+from services.post import get_all_posts, get_post, create_post, update_post, delete_post
 
 def test_create_post():
     assert create_post is not None

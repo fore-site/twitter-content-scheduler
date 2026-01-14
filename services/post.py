@@ -168,6 +168,10 @@ async def update_post(post_id: int, user_id: Annotated[int, Depends(CheckJwt())]
           "user_id": user_id,
           "post_id": post_id,
           "post_status": PostStatus.pending.value})
+            affected_row = await cur.rowcount
+            if not affected_row:
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                                    detail="Post does not exist.")
             result = await cur.fetchone()
         if not result:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, 
@@ -192,5 +196,9 @@ async def delete_post(post_id: int, user_id: Annotated[int, Depends(CheckJwt())]
             await cur.execute("""
         DELETE FROM posts
         WHERE id = %s AND user_id = %s
-""",  (post_id, user_id))
+        """,  (post_id, user_id))
+            affected_row = await cur.rowcount
+            if affected_row == 0:
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                                    detail="Post does not exist.")
     return None

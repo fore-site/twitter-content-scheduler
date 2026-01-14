@@ -1,10 +1,9 @@
 from config import db
-from config.wasabi import WasabiClient
+from object_storage.wasabi_service import wasabi_file_handling
 from fastapi import Depends, Form, HTTPException, status
 from models.PostModel import BasePost, PostOut, UpdatePost
 from models.TypeModel import PostStatus
 from psycopg.rows import dict_row
-from services.media import get_media_id, upload_to_wasabi
 from scheduler.job import add_job_to_scheduler, modify_job_in_scheduler
 from typing import Annotated
 from utils.dependencies import CheckJwt
@@ -64,7 +63,6 @@ async def get_post(post_id: int, user_id: Annotated[int, Depends(CheckJwt())]):
 async def create_post(user_id: Annotated[int, Depends(CheckJwt())], 
                       post_body: Annotated[BasePost, Form(media_type="multipart/form-data")]):
     """Logic to create tweet and attach media."""
-    media_list = []
 
     if post_body.text:
         try:
@@ -74,20 +72,7 @@ async def create_post(user_id: Annotated[int, Depends(CheckJwt())],
                           detail=str(e))  
 
     if post_body.files:
-        media_id_list = []
-        s3 = WasabiClient()
-        for file in post_body.files:
-            media_id = await get_media_id(user_id=user_id, media=file)
-            logger.info(f"Upload to Twitter/X complete, Media ID: {media_id}")
-            media_id_list.append(media_id)
-
-        # GENERATE URL FOR UPLOAD AND UPLOAD FILE TO WASABI STORAGE
-            put_url = await s3.generate_presigned_url(key=file.filename)
-            await upload_to_wasabi(url=put_url, file=file)
-        
-        # GENERATE URL FOR DOWNLOAD/READING FILE FROM WASABI AND APPEND TO LIST
-            get_url = await s3.generate_presigned_url(key=file.filename, method='get')
-            media_list.append(get_url)
+        media_dict = await wasabi_file_handling(user_id, post_body)
 
     # ADD TWEET TO DATABASE
     async with db.db_pool.connection() as conn:
@@ -98,7 +83,7 @@ async def create_post(user_id: Annotated[int, Depends(CheckJwt())],
             (%s, %s, %s, %s)
             RETURNING id          
             """, (post_body.text, 
-                media_list, 
+                media_dict.get('media_list'), 
                 post_body.scheduled_time, 
                 user_id))
             result = await cur.fetchone()
@@ -121,20 +106,8 @@ async def update_post(post_id: int, user_id: Annotated[int, Depends(CheckJwt())]
                           detail=str(e))
 
     if post_body.files:
-        media_id_list = []
-        s3 = WasabiClient()
-        for file in post_body.files:
-            media_id = await get_media_id(user_id=user_id, media=file)
-            logger.info(f"Upload complete, Media ID: {media_id}")
-            media_id_list.append(media_id)
-
-        # GENERATE URL FOR UPLOAD AND UPLOAD FILE TO WASABI STORAGE
-            put_url = await s3.generate_presigned_url(key=file.filename)
-            await upload_to_wasabi(url=put_url, file=file)
-        
-        # GENERATE URL FOR DOWNLOAD/READING FILE FROM WASABI AND APPEND TO LIST
-            get_url = await s3.generate_presigned_url(key=file.filename, method='get')
-            post_body.media.append(get_url)
+        media_dict = await wasabi_file_handling(user_id, post_body, post_body.media)
+        post_body.media = media_dict.get('media_list')
 
     async with db.db_pool.connection() as conn:
         async with conn.cursor() as cur:

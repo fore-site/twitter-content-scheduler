@@ -2,16 +2,16 @@ from datetime import datetime, timedelta, timezone
 from fastapi import UploadFile
 from pydantic import BaseModel, Field, field_validator, ValidationInfo
 from models.TypeModel import PostStatus
-from typing import List
+from typing import List, Annotated, Optional
 
 class BasePost(BaseModel):
     """Table posts. Model for creating posts."""
-    text: str | None = None
-    days: int = 0
-    hours: int  = 0
-    minutes: int = 0
+    text: Optional[str]
+    days: Annotated[int, Field(0, ge=0, le=7)]
+    hours: Annotated[int, Field(0, ge=0, le=24)]
+    minutes: Annotated[int, Field(0, ge=0, le=60)]
     files: List[UploadFile] | None = Field(None, validate_default=True)
-    scheduled_time: datetime = Field(datetime.now(), validate_default=True)
+    scheduled_time: Annotated[datetime, Field(datetime.now(), validate_default=True)]
     
     @field_validator("scheduled_time", mode="before")
     @classmethod
@@ -33,7 +33,7 @@ class BasePost(BaseModel):
 
 class UpdatePost(BasePost):
     """Table Posts. Model for updating posts."""
-    media: List[str] = Field(default=list())
+    media: Annotated[List[str], Field(default=list())]
 
 class PostOut(BaseModel):
     """Table Posts. Model for output posts"""

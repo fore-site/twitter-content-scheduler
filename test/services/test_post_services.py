@@ -11,8 +11,9 @@ async def test_create_post():
     
 @pytest.mark.asyncio(loop_scope='session')
 async def test_create_post_invalid_values():
-    post = BasePost(text='Hello', minutes=-1)
-    assert await create_post(123, post) == post
+    with pytest.raises(TypeError):
+        post = BasePost(text='Hello', minutes=-1)
+        await create_post(123, post)
 
 @pytest.mark.asyncio(loop_scope='session')
 async def test_get_post():
@@ -53,7 +54,7 @@ async def test_update_post_non_pending_status():
 
 @pytest.mark.asyncio(loop_scope='session')
 async def test_delete_post():
-    assert await delete_post(8, TWITTER_USER_ID) == None
+    assert await delete_post(9, TWITTER_USER_ID) == None
 
 @pytest.mark.asyncio(loop_scope='session')
 async def test_delete_post_invalid_postID():

@@ -144,7 +144,7 @@ async def update_post(post_id: int, user_id: Annotated[int, Depends(CheckJwt())]
     # DELETE files ATTRIBUTE FROM POST_BODY OBJECT
     delattr(post_body, 'files')
 
-    # await modify_job_in_scheduler(user_id, post_id, post_body)
+    await modify_job_in_scheduler(user_id, post_id, post_body)
 
     return post_body
 

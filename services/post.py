@@ -31,7 +31,7 @@ async def get_all_posts(user_id: Annotated[int, Depends(CheckJwt())], page: int 
                      "limit": page_size,
                      "offset": offset})
             result = await cur.fetchall()
-            if result is None:
+            if not result:
                 return []
             else:
                 return {"data": result,
@@ -55,7 +55,7 @@ async def get_post(post_id: int, user_id: Annotated[int, Depends(CheckJwt())]):
             """, {"post_id": post_id, 
                   "user_id": user_id})
             result = await cur.fetchone()
-    if result is None:
+    if not result:
         return []
     post = PostOut(**result)
     return post
@@ -63,6 +63,7 @@ async def get_post(post_id: int, user_id: Annotated[int, Depends(CheckJwt())]):
 async def create_post(user_id: Annotated[int, Depends(CheckJwt())], 
                       post_body: Annotated[BasePost, Form(media_type="multipart/form-data")]):
     """Logic to create tweet and attach media."""
+    media_list = []
 
     if post_body.text:
         try:
@@ -73,6 +74,7 @@ async def create_post(user_id: Annotated[int, Depends(CheckJwt())],
 
     if post_body.files:
         media_dict = await wasabi_file_handling(user_id, post_body)
+        media_list = media_dict.get('media_list')
 
     # ADD TWEET TO DATABASE
     async with db.db_pool.connection() as conn:
@@ -83,7 +85,7 @@ async def create_post(user_id: Annotated[int, Depends(CheckJwt())],
             (%s, %s, %s, %s)
             RETURNING id          
             """, (post_body.text, 
-                media_dict.get('media_list'), 
+                media_list, 
                 post_body.scheduled_time, 
                 user_id))
             result = await cur.fetchone()
@@ -111,6 +113,15 @@ async def update_post(post_id: int, user_id: Annotated[int, Depends(CheckJwt())]
 
     async with db.db_pool.connection() as conn:
         async with conn.cursor() as cur:
+            await cur.execute("""SELECT id FROM posts WHERE id = %(post_id)s""",
+                              {"post_id": post_id})
+            
+            result = await cur.fetchone()
+            
+            if not result:
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                detail="Post not found.")
+            
             await cur.execute("""
             UPDATE posts
             SET text = %(text)s,
@@ -119,26 +130,21 @@ async def update_post(post_id: int, user_id: Annotated[int, Depends(CheckJwt())]
             WHERE posts.user_id = %(user_id)s AND
                     posts.id = %(post_id)s AND
                     posts.post_status = %(post_status)s
-            RETURNING id
     """, {"text": post_body.text, 
           "media": post_body.media, 
           "scheduled_time": post_body.scheduled_time,
           "user_id": user_id,
           "post_id": post_id,
           "post_status": PostStatus.pending.value})
-            affected_row = await cur.rowcount
+            affected_row = cur.rowcount
             if not affected_row:
-                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
-                                    detail="Post does not exist.")
-            result = await cur.fetchone()
-        if not result:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, 
-                                    detail="Can only update a pending post.")
+                raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                                    detail="Can only update a post of 'pending' status.")
     
     # DELETE files ATTRIBUTE FROM POST_BODY OBJECT
     delattr(post_body, 'files')
 
-    await modify_job_in_scheduler(user_id, post_id, post_body)
+    # await modify_job_in_scheduler(user_id, post_id, post_body)
 
     return post_body
 
@@ -149,7 +155,7 @@ async def delete_post(post_id: int, user_id: Annotated[int, Depends(CheckJwt())]
         DELETE FROM posts
         WHERE id = %s AND user_id = %s
         """,  (post_id, user_id))
-            affected_row = await cur.rowcount
+            affected_row = cur.rowcount
             if affected_row == 0:
                 raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                                     detail="Post does not exist.")

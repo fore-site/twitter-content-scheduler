@@ -5,12 +5,14 @@ asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 import pytest_asyncio
 from fastapi import UploadFile
 from pathlib import Path
-from config.db import db_pool
+from config.db import db_pool, redis_client
 from datetime import datetime
 from utils.auth_utils import create_access_token, create_refresh_token
+import json
 
 @pytest_asyncio.fixture(autouse=True, scope='session', loop_scope='session')
 async def mock_user_and_post():
+    await redis_client.set('123:oauth', json.dumps({'access_token': 'xyz'}))
     await db_pool.open()
     async with db_pool.connection() as conn:
         async with conn.cursor() as cur:
@@ -30,6 +32,7 @@ async def mock_user_and_post():
             post_id = result[0]
     yield post_id
 
+    await redis_client.delete('123:oauth')
     async with db_pool.connection() as conn:
         async with conn.cursor() as cur:
             await cur.execute("""

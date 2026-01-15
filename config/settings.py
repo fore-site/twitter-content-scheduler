@@ -16,6 +16,7 @@ scope = "tweet.read tweet.write users.read offline.access media.write"
 MEDIA_UPLOAD_ENDPOINT = str("https://api.x.com/2/media/upload")
 WASABI_SECRET_KEY = os.environ.get("WASABI_SECRET_KEY")
 WASABI_ACCESS_KEY = os.environ.get("WASABI_ACCESS_KEY")
+TWITTER_USER_ID = int(os.environ.get("TWITTER_USER_ID"))
 
 # use "openssl rand -hex 32" to generate secret key
 JWT_SECRET_KEY = os.environ.get("JWT_SECRET_KEY")
